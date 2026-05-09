@@ -1,0 +1,83 @@
+export const translations = {
+  es: { 
+    title: "MUNDIAL", predictions: "Partidos", honor: "Premios", logout: "Salir", save: "Confirmar 🔒", saveExtras: "Guardar 🏆", vip: "INTRODUCE TU TOKEN", loginBtn: "Entrar", signupBtn: "Crear Cuenta", email: "Correo", pass: "Contraseña", user: "Usuario", welcome: "¡Hola!", already: "¿Ya tienes cuenta?", useToken: "Tengo un Token", ranking: "Ranking", tableTitle: "Posiciones", validate: "Validar Token", loginLink: "Entrar", backToken: "Volver al Token", loading: "CARGANDO...",
+    nav_inicio: "INICIO", nav_pronosticos: "PRONÓSTICOS", nav_extras: "PREMIOS EXTRA", nav_resultados: "RESULTADOS", nav_ranking: "RANKING", nav_apuestas: "APUESTAS",
+    // --- SECCIÓN INICIO ---
+    welcome_text: "Bienvenido a la porra del Mundial 2026. ¡Demuestra que eres el que más sabe de fútbol!",
+    inst_title: "INSTRUCCIONES",
+    inst_text: "Hola:<br/>Bienvenido a la porra del <b>Mundial de Fútbol 2026</b>.<br/><br/>Muchos ya me conocéis y sabéis que llevo varios mundiales organizando este tipo de eventos. En esta ocasión <b>estrenamos formato</b>, por lo que os pido disculpas de antemano si surge algún error técnico.<br/><br/>Debajo de estas líneas podéis consultar el sistema de puntuación. Lo primero que debéis hacer es realizar vuestra apuesta en la pestaña <b>PRONÓSTICOS</b>. Es necesario introducir el resultado de <b>TODOS</b> los partidos de la fase de grupos; el sistema generará automáticamente una clasificación que determinará qué equipos pasan a la siguiente ronda.<br/><br/>Tanto la fase de grupos como los pronósticos de premios <b>EXTRA</b> deben completarse antes de las <b>20:50 del 11 de junio</b>.<br/><br/>Os adjunto un PDF con las instrucciones completas y detalladas. Por favor, revisad esa información: es esencial para entender la dinámica y puede marcar la diferencia para ganar la porra.<br/><br/>¡Gracias a todos por participar y mucha suerte!",
+    rules_title: "SISTEMA DE PUNTUACIÓN",
+    rules_progression: "Puntuación por Progresión",
+    rules_results: "Resultados",
+    rules_finals: "Finales",
+    rules_exact: "Resultado Exacto",
+    rules_3rd: "Ganador 3er Puesto",
+    rules_champion: "Ganador Mundial",
+    rules_special_pts: "Premios Especiales (10 PTS cada uno)",
+    rule_p32: "Pase a Round 32",
+    rule_p16: "Pase a Round 16",
+    rule_pqf: "Pase a Quarter-finals",
+    rule_psf: "Pase a Semi-finals",
+    rule_pf: "Pase a la Final",
+    // --- EXTRAS ---
+    extra_mvp: "🏆 Balón de Oro",
+    extra_pichichi: "👟 Bota de Oro",
+    extra_gk: "🧤 Guante de Oro",
+    extra_young: "👶 Mejor Jugador Joven",
+    extra_fairplay: "🤝 Premio Fair Play"
+  },
+  ca: { 
+    title: "MUNDIAL", predictions: "Partits", honor: "Premis", logout: "Sortir", save: "Confirmar 🔒", saveExtras: "Guardar 🏆", vip: "INTRODUEIX EL TEU TOKEN", loginBtn: "Entrar", signupBtn: "Crear Compte", email: "Correu", pass: "Contrasenya", user: "Usuari", welcome: "Hola!", already: "Ja tens compte?", useToken: "Tinc un Token", ranking: "Rànquing", tableTitle: "Posicions", validate: "Validar Token", loginLink: "Entrar", backToken: "Tornar al Token", loading: "CARREGANT...",
+    nav_inicio: "INICI", nav_pronosticos: "PRONÒSTICS", nav_extras: "PREMIS EXTRA", nav_resultados: "RESULTATS", nav_ranking: "RÀNQUING", nav_apuestas: "APOSTES",
+    // --- SECCIÓN INICIO ---
+    welcome_text: "Benvingut a la porra del Mundial 2026. Demostra els teus coneixements!",
+    inst_title: "INSTRUCCIONS",
+    inst_text: "Hola:<br/>Benvinguts a la porra del <b>Mundial de Futbol 2026</b>.<br/><br/>Molts ja em coneixeu i sabeu que fa uns quants mundials que organitzo aquest tipus d'esdeveniments. En aquesta ocasió <b>estrenem format</b>, per la qual cosa us demano disculpes per endavant si sorgeix algun error tècnic.<br/><br/>Sota aquestes línies podeu consultar el sistema de puntuació. El primer que heu de fer és realitzar la vostra aposta a la pestanya <b>PRONÒSTICS</b>. Cal introduir el resultat de <b>TOTS</b> els partits de la fase de grups; el sistema generarà automàticament una classificació que determinarà quins equips passen a la següent ronda.<br/><br/>Tant la fase de grups com els pronòstics de premis <b>EXTRA</b> s'han de completar abans de les <b>20:50 de l'11 de juny</b>.<br/><br/>Us adjunto un PDF amb les instruccions completes i detallades. Si us plau, reviseu aquesta informació: és essencial per entendre la dinàmica i pot marcar la diferència per guanyar la porra.<br/><br/>Gràcies a tots per participar i molta sort!",
+    rules_title: "SISTEMA DE PUNTUACIÓ",
+    rules_progression: "Puntuació per Progressió",
+    rules_results: "Resultats",
+    rules_finals: "Finals",
+    rules_exact: "Resultat Exacte",
+    rules_3rd: "Guanyador 3r Lloc",
+    rules_champion: "Guanyador Mundial",
+    rules_special_pts: "Premis Especials (10 PTS cada un)",
+    rule_p32: "Pas a Round 32",
+    rule_p16: "Pas a Round 16",
+    rule_pqf: "Pas a Quarter-finals",
+    rule_psf: "Pas a Semi-finals",
+    rule_pf: "Pas a la Final",
+    // --- EXTRAS ---
+    extra_mvp: "🏆 Pilota d'Or",
+    extra_pichichi: "👟 Bota d'Or",
+    extra_gk: "🧤 Guant d'Or",
+    extra_young: "👶 Millor Jugador Jove",
+    extra_fairplay: "🤝 Premi Fair Play"
+  },
+  en: { 
+    title: "WORLD CUP", predictions: "Matches", honor: "Prizes", logout: "Logout", save: "Confirm 🔒", saveExtras: "Save 🏆", vip: "ENTER YOUR TOKEN", loginBtn: "Login", signupBtn: "Sign Up", email: "Email", pass: "Password", user: "Username", welcome: "Hi!", already: "Have an account?", useToken: "Use Token", ranking: "Ranking", tableTitle: "Standings", validate: "Validate Token", loginLink: "Login", backToken: "Back to Token", loading: "LOADING...",
+    nav_inicio: "HOME", nav_pronosticos: "PREDICTIONS", nav_extras: "EXTRA PRIZES", nav_resultados: "RESULTS", nav_ranking: "RANKING", nav_apuestas: "BETS",
+    // --- SECCIÓN INICIO ---
+    welcome_text: "Welcome to the 2026 World Cup prediction challenge. Show your skills!",
+    inst_title: "INSTRUCTIONS",
+    inst_text: "Hello:<br/>Welcome to the <b>2026 World Cup Sweepstake</b>.<br/><br/>Many of you already know me and are aware that I have been organizing these types of events for several World Cups now. This time we are <b>launching a new format</b>, so I apologize in advance should any technical errors arise.<br/><br/>You can check the scoring system below. The first thing you need to do is place your bets in the <b>PRONÓSTICOS (PREDICTIONS)</b> tab. You must enter the results for <b>ALL</b> group stage matches; the system will automatically generate a ranking to determine which teams advance to the next round.<br/><br/>Both the group stage predictions and the <b>EXTRA</b> prizes must be completed by <b>June 11th at 8:50 PM</b>.<br/><br/>I have attached a PDF with full, detailed instructions. Please review this information: it is essential to understand how it works and could be the key to winning the sweepstake.<br/><br/>Thank you all for participating and good luck!",
+    rules_title: "SCORING SYSTEM",
+    rules_progression: "Progression Points",
+    rules_results: "Results",
+    rules_finals: "Finals",
+    rules_exact: "Exact Score",
+    rules_3rd: "3rd Place Winner",
+    rules_champion: "World Champion",
+    rules_special_pts: "Special Prizes (10 PTS each)",
+    rule_p32: "To Round 32",
+    rule_p16: "To Round 16",
+    rule_pqf: "To Quarter-finals",
+    rule_psf: "To Semi-finals",
+    rule_pf: "To the Final",
+    // --- EXTRAS ---
+    extra_mvp: "🏆 Golden Ball",
+    extra_pichichi: "👟 Golden Boot",
+    extra_gk: "🧤 Golden Glove",
+    extra_young: "👶 Best Young Player",
+    extra_fairplay: "🤝 Fair Play Award"
+  }
+};
