@@ -9,14 +9,15 @@ import ExtrasTab from './components/extrastab'
 import MatchesTab from './components/matchestab'
 import { recalcularClasificacion } from './libs/utils'
 import AuthScreen from './components/authscreen'
-import { validarToken, handleRegister, handleLogin, fetchAllData } from './libs/actions'
+import { validarToken } from './components/authLogic';
+import { handleRegister, handleLogin, fetchAllData } from './libs/actions';
 // --- FINAL DE CABECERA page.js ---
 
 
 export default function Home() {
   const [lang, setLang] = useState('es');
   const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [accessStep, setAccessStep] = useState('token'); // 'token', 'register', 'login'
   const [activeTab, setActiveTab] = useState('predictions'); // Controlará el fondo cuando estés dentro
 
@@ -120,7 +121,7 @@ async function fetchAllData(userId) {
         bgImages={bgImages} t={t} lang={lang} setLang={setLang}
         accessStep={accessStep} setAccessStep={setAccessStep}
         vipCode={vipCode} setVipCode={setVipCode} 
-        validarToken={() => validarToken(vipCode, setAccessStep)}
+        validarToken={() => validarToken(vipCode, setLoading, setAccessStep)}
         username={username} setUsername={setUsername}
         email={email} setEmail={setEmail}
         password={password} setPassword={setPassword}

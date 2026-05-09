@@ -2,13 +2,8 @@
 import { supabase } from '../../supabaseClient'
 import { recalcularClasificacion } from './utils'
 
-export const validarToken = (vipCode, setAccessStep) => {
-  if (vipCode.toUpperCase() === 'MUNDIAL2026') {
-    setAccessStep('register');
-  } else {
-    alert("Código no válido");
-  }
-};
+// He eliminado validarToken de aquí para que use la de authLogic.js
+// que es la que tiene la conexión real a la base de datos.
 
 export const handleRegister = async (email, password, username, setSession, setLoading) => {
   setLoading(true);
