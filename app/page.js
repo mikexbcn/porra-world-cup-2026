@@ -131,17 +131,28 @@ async function fetchAllData(userId) {
     );
 
 return (
-    <main className="min-h-screen text-white relative">
-      {/* CAPA DE IMAGEN: Asegúrate de que bgImages.dentro tenga una URL válida */}
-      <div className="fixed inset-0 z-0">
-        <img 
-          src={bgImages.dentro} 
-          className="w-full h-full object-cover opacity-40 pointer-events-none" 
-          alt="bg-internal" 
-        />
-        {/* Capa extra de oscurecido para que no se vea negro puro */}
-        <div className="absolute inset-0 bg-black/60"></div>
-      </div>
+  <main className="min-h-screen text-white relative">
+    
+    {/* FIRMA DE AUTOR: AJUSTE DE SEGURIDAD SIN ERRORES */}
+    <div 
+      style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 99999 }}
+      className="opacity-40 hover:opacity-100 transition-opacity pointer-events-none"
+    >
+      <p className="text-[10px] font-black uppercase tracking-[0.2em] italic drop-shadow-lg">
+        By Mike
+      </p>
+    </div>
+
+    {/* CAPA DE IMAGEN: Asegúrate de que bgImages.dentro tenga una URL válida */}
+    <div className="fixed inset-0 z-0">
+      <img 
+        src={bgImages.dentro} 
+        className="w-full h-full object-cover opacity-40 pointer-events-none" 
+        alt="bg-internal" 
+      />
+      {/* Capa extra de oscurecido para que no se vea negro puro */}
+      <div className="absolute inset-0 bg-black/60"></div>
+    </div>
 
       <div className="relative z-10"></div>
 
@@ -182,8 +193,10 @@ return (
   </div>
 )}
 
-      </div> {/* Cierra max-w-4xl */}
+
+     </div> {/* Cierra max-w-4xl */}
      </div> {/* Cierra el segundo relative z-10 */}
+
     </main>
   );
 }
