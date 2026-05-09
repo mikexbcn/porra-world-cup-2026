@@ -97,17 +97,33 @@ export default function MatchesTab({
                       <span className="text-[11px] font-black uppercase block">{match.home_team}</span>
                     </div>
                     <div className="flex gap-4 items-center">
-                      <input type="number" value={pronosticos[match.id]?.h || ''} onChange={(e) => {
-                        const newP = {...pronosticos, [match.id]: {...pronosticos[match.id], h: e.target.value}};
-                        setPronosticos(newP); 
-                        recalcularClasificacion(partidos, newP, setTablas);
-                      }} className="w-16 bg-black border border-white/20 text-center text-4xl font-black text-yellow-500 rounded-2xl py-4" placeholder="-" />
+                      <input 
+                        type="number" 
+                        min="0"
+                        value={pronosticos[match.id]?.h || ''} 
+                        onChange={(e) => {
+                          if (parseInt(e.target.value) < 0) return; // Bloqueo de negativos
+                          const newP = {...pronosticos, [match.id]: {...pronosticos[match.id], h: e.target.value}};
+                          setPronosticos(newP); 
+                          recalcularClasificacion(partidos, newP, setTablas);
+                        }} 
+                        className="w-16 bg-black border border-white/20 text-center text-4xl font-black text-yellow-500 rounded-2xl py-4" 
+                        placeholder="-" 
+                      />
                       <span className="text-gray-600 font-black italic">VS</span>
-                      <input type="number" value={pronosticos[match.id]?.a || ''} onChange={(e) => {
-                        const newP = {...pronosticos, [match.id]: {...pronosticos[match.id], a: e.target.value}};
-                        setPronosticos(newP); 
-                        recalcularClasificacion(partidos, newP, setTablas);                      
-                      }} className="w-16 bg-black border border-white/20 text-center text-4xl font-black text-yellow-500 rounded-2xl py-4" placeholder="-" />
+                      <input 
+                        type="number" 
+                        min="0"
+                        value={pronosticos[match.id]?.a || ''} 
+                        onChange={(e) => {
+                          if (parseInt(e.target.value) < 0) return; // Bloqueo de negativos
+                          const newP = {...pronosticos, [match.id]: {...pronosticos[match.id], a: e.target.value}};
+                          setPronosticos(newP); 
+                          recalcularClasificacion(partidos, newP, setTablas);                      
+                        }} 
+                        className="w-16 bg-black border border-white/20 text-center text-4xl font-black text-yellow-500 rounded-2xl py-4" 
+                        placeholder="-" 
+                      />
                     </div>
                     <div className="flex-1 text-center">
                       <img src={getFlag(match.away_team)} className="w-14 h-9 mx-auto mb-2 rounded shadow-md" alt="" />
