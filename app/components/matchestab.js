@@ -91,6 +91,23 @@ export default function MatchesTab({
             <>
               {partidos.filter(m => m.group_stage === activePhase).map(match => (
                 <div key={match.id} className="bg-white/5 border border-white/10 rounded-3xl p-6">
+
+              {/* --- BLOQUE DE FECHA INICIO (NUEVO) --- */}
+                  <div className="text-center mb-4">
+                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-[2px]">
+                      {match.match_date ? (
+                        new Date(match.match_date).toLocaleString('es-ES', {
+                          weekday: 'short',
+                          day: '2-digit',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        }).replace('.', '')
+                      ) : 'Fecha TBD'}
+                    </span>
+                  </div>
+                  {/* --- BLOQUE DE FECHA FIN --- */}
+
                   <div className="flex justify-between items-center gap-4">
                     <div className="flex-1 text-center">
                       <img src={getFlag(match.home_team)} className="w-14 h-9 mx-auto mb-2 rounded shadow-md" alt="" />
