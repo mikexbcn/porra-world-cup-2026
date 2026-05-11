@@ -166,14 +166,25 @@ const PartidoSelectorCard = ({ partidoId, getOpciones, apuestas, onSelect, getFl
 
 export default function BracketTab({ tablas, getFlag, session }) {
 
-// Aquí le pasamos 'tablas' a las funciones de arriba
+  // 1. ESTADO DE LAS APUESTAS
+  const [apuestas, setApuestas] = useState({});
+
+  // 2. SEGURO DE CARGA: Si no hay tablas, mostramos un cargando
+  if (!tablas || Object.keys(tablas).length === 0) {
+    console.log("DEBUG - Esperando tablas...");
+    return (
+      <div className="flex flex-col items-center justify-center p-20 text-white">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mb-4"></div>
+        <p className="text-xs font-black uppercase tracking-widest italic">Cargando datos de la Porra...</p>
+      </div>
+    );
+  }
+
+  // 3. CÁLCULOS (Ahora seguros)
   const tercerosAsignadosMap = getAsignacionTerceros(tablas);
   const mejoresTerceros = getMejoresTerceros(tablas);
-
-console.log("DEBUG - Tablas recibidas:", tablas);
-
-// --- PUNTO 2: ESTADO DE LAS APUESTAS ---
-  const [apuestas, setApuestas] = useState({});
+  
+  console.log("DEBUG - Tablas recibidas:", tablas);
 
   const handleEleccion = (partidoId, lado, equipoNombre) => {
     setApuestas(prev => ({
@@ -182,72 +193,46 @@ console.log("DEBUG - Tablas recibidas:", tablas);
     }));
   };
 
-// 3. DEFINICIÓN DE LA ROUND 32 (Corregida según tu auditoría)
   const crucesR32 = [
     { id: 73, local: '2A', visitante: '2B' },
-    { id: 74, local: '1E', visitante: 'M74' }, // 3ABCDF (Usamos nuestra pos 0)
+    { id: 74, local: '1E', visitante: 'M74' },
     { id: 75, local: '1F', visitante: '2C' },
     { id: 76, local: '1C', visitante: '2F' },
-    { id: 77, local: '1I', visitante: 'M77' }, // 3CDFGH (Usamos nuestra pos 1)
+    { id: 77, local: '1I', visitante: 'M77' },
     { id: 78, local: '2E', visitante: '2I' },
-    { id: 79, local: '1A', visitante: 'M79' }, // 3CEFHI (Usamos nuestra pos 2)
-    { id: 80, local: '1L', visitante: 'M80' }, // 3EHIJK (Usamos nuestra pos 3)
-    { id: 81, local: '1D', visitante: 'M81' }, // 3BEFIJ (Usamos nuestra pos 4)
-    { id: 82, local: '1G', visitante: 'M82' }, // 3AEHIJ (Usamos nuestra pos 5)
+    { id: 79, local: '1A', visitante: 'M79' },
+    { id: 80, local: '1L', visitante: 'M80' },
+    { id: 81, local: '1D', visitante: 'M81' },
+    { id: 82, local: '1G', visitante: 'M82' },
     { id: 83, local: '2K', visitante: '2L' },
     { id: 84, local: '1H', visitante: '2J' },
-    { id: 85, local: '1B', visitante: 'M85' }, // 3EFGIJ (Usamos nuestra pos 6)
+    { id: 85, local: '1B', visitante: 'M85' },
     { id: 86, local: '1J', visitante: '2H' },
-    { id: 87, local: '1K', visitante: 'M87' }, // 3DEIJL (Usamos nuestra pos 7)
+    { id: 87, local: '1K', visitante: 'M87' },
     { id: 88, local: '2D', visitante: '2G' }
   ];
 
-      // 4. TRADUCTOR DE CÓDIGOS A NOMBRES REALES
   const getNombreReal = (codigo) => {
     if (!codigo) return '---';
-    
-    // Si es un Tercero (M74, M77...)
-    if (codigo.startsWith('M')) {
-        return tercerosAsignadosMap[codigo] || '3º ' + codigo.replace('M', '');        
-    }
-    
-    // Si es 1º o 2º (1A, 2B...)
-    const posicion = parseInt(codigo[0]) - 1; // 0 para el primero, 1 para el segundo
+    if (codigo.startsWith('M')) return tercerosAsignadosMap[codigo] || '3º ' + codigo.replace('M', '');
+    const posicion = parseInt(codigo[0]) - 1;
     const letraGrupo = codigo[1];
     const nombreGrupo = `GROUP ${letraGrupo}`;
-    
     return tablas[nombreGrupo]?.[posicion]?.nombre || codigo;
   };
 
-  // --- PUNTO 3: LÓGICA DE OPCIONES ---
   const getOpcionesParaPartido = (partidoId, lado) => {
     const config = MAPA_ELIMINATORIAS[partidoId];
     if (!config) return [];
-    
     const idPrevio = lado === 'local' ? config.local : config.visitante;
-
-    // Si el previo es Round 32 (73-88), las opciones vienen de los resultados de grupos
     if (idPrevio >= 73 && idPrevio <= 88) {
       const p32 = crucesR32.find(p => p.id === idPrevio);
-      if (!p32) return [];
-      return [getNombreReal(p32.local), getNombreReal(p32.visitante)];
+      return p32 ? [getNombreReal(p32.local), getNombreReal(p32.visitante)] : [];
     }
-
-    // Si el previo es una fase avanzada, las opciones son lo que el usuario eligió antes
     const opcionA = apuestas[`${idPrevio}_local`];
     const opcionB = apuestas[`${idPrevio}_visitante`];
-    
-    // Solo devolvemos las opciones que ya tengan un nombre elegido
     return [opcionA, opcionB].filter(Boolean);
   };
-  
-
-    
-// Ordenamos los partidos para que la "llave" fluya hacia la final
-  const ordenVisualR32 = [
-    73, 74, 75, 76, 77, 78, 79, 80, // Lado izquierdo del cuadro
-    81, 82, 83, 84, 85, 86, 87, 88  // Lado derecho del cuadro
-  ];
 
   return (
     <div className="p-4 relative z-10 space-y-10">

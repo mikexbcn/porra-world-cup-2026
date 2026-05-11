@@ -11,6 +11,7 @@ import { recalcularClasificacion } from './libs/utils'
 import AuthScreen from './components/authscreen'
 import { validarToken } from './components/authLogic';
 import { handleRegister, handleLogin, fetchAllData } from './libs/actions';
+import BracketTab from './components/brackettab';
 // --- FINAL DE CABECERA page.js ---
 
 
@@ -189,6 +190,20 @@ return (
       extras={extras}
       setExtras={setExtras}
       ExtrasTab={ExtrasTab}
+    />
+  </div>
+)}
+
+{/* --- SECCIÓN DE APUESTAS (CUADRO MAESTRO) --- */}
+{tab === 'bets' && (
+  <div className="animate-fade-in relative z-10">
+    <h2 className="text-xl font-black text-yellow-500 uppercase mb-8 text-center italic tracking-widest">
+      {t.cuadroMaestro || 'Cuadro Eliminatorio'}
+    </h2>
+    <BracketTab 
+      tablas={tablas} 
+      getFlag={getFlag} 
+      session={session} 
     />
   </div>
 )}

@@ -112,7 +112,7 @@ export default function MatchesTab({
                     <div className="flex-1 text-center">
                       <img src={getFlag(match.home_team)} className="w-14 h-9 mx-auto mb-2 rounded shadow-md" alt="" />
                       <span className="text-[11px] font-black uppercase block">{match.home_team}</span>
-                    </div>
+                     </div>
                     <div className="flex gap-4 items-center">
                       <input 
                         type="number" 
