@@ -17,6 +17,72 @@ const MAPA_ELIMINATORIAS = {
   104: { local: 101, visitante: 102 } // Final
 };
 
+  // 1. FUNCIÓN MATEMÁTICA: Obtener ranking de mejores terceros
+  const getMejoresTerceros = (datostablas) => {
+    const terceros = [];
+    const grupos = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+
+    if (!datostablas) return [];
+    
+    grupos.forEach(letra => {
+      const nombreGrupo = `GROUP ${letra}`;
+      const tabla = datostablas[nombreGrupo];
+      if (tabla && tabla[2]) {
+        terceros.push({ ...tabla[2], grupo: letra });
+      }
+    });
+
+    return terceros.sort((a, b) => {
+      if (b.pts !== a.pts) return b.pts - a.pts;
+      if (b.dg !== a.dg) return b.dg - a.dg;
+      return b.gf - a.gf;
+    }).slice(0, 8);
+  };
+
+// --- LÓGICA DE TERCEROS (FUERA DEL COMPONENTE PARA EVITAR ERRORES DE ORDEN) ---  
+// 2. FUNCIÓN DE ASIGNACIÓN (Lógica de Descarte con Restricciones FIFA)
+
+const getAsignacionTerceros = (datostablas) => {
+      const ranking = getMejoresTerceros(datostablas);
+    const asignados = {};
+    const usados = new Set();
+
+    // 1. Definimos los "asientos" disponibles (partidos)
+    const slots = [
+      { id: 'M74', permitidos: ['A', 'B', 'C', 'D', 'F'] },
+      { id: 'M77', permitidos: ['C', 'D', 'F', 'G', 'H'] },
+      { id: 'M79', permitidos: ['C', 'E', 'F', 'H', 'I'] },
+      { id: 'M80', permitidos: ['E', 'H', 'I', 'J', 'K'] },
+      { id: 'M81', permitidos: ['B', 'E', 'F', 'I', 'J'] },
+      { id: 'M82', permitidos: ['A', 'E', 'H', 'I', 'J'] },
+      { id: 'M85', permitidos: ['E', 'F', 'G', 'I', 'J'] },
+      { id: 'M87', permitidos: ['D', 'E', 'I', 'J', 'L'] }
+    ];
+
+    // 2. Ordenamos el ranking para que los grupos K y L tengan prioridad absoluta de elección
+    // Si un equipo es del grupo K o L, lo procesamos antes que a los demás para que no se queden sin sitio
+    const rankingPriorizado = [...ranking].sort((a, b) => {
+      const prioridad = { 'K': 1, 'L': 1, 'A': 2, 'B': 2, 'G': 2 };
+      const pA = prioridad[a.grupo] || 10;
+      const pB = prioridad[b.grupo] || 10;
+      return pA - pB;
+    });
+
+    // 3. Asignamos: Cada equipo busca el primer partido de su lista de permitidos que esté libre
+    rankingPriorizado.forEach(equipo => {
+      const partidoLibre = slots.find(slot => 
+        slot.permitidos.includes(equipo.grupo) && !asignados[slot.id]
+      );
+
+      if (partidoLibre) {
+        asignados[partidoLibre.id] = equipo.nombre;
+        usados.add(equipo.nombre);
+      }
+    });
+
+    return asignados;
+  };
+
 const PartidoCard = ({ partido, getNombreReal, getFlag }) => {
   const local = getNombreReal(partido.local);
   const visitante = getNombreReal(partido.visitante);
@@ -100,6 +166,10 @@ const PartidoSelectorCard = ({ partidoId, getOpciones, apuestas, onSelect, getFl
 
 export default function BracketTab({ tablas, getFlag, session }) {
 
+// Aquí le pasamos 'tablas' a las funciones de arriba
+  const tercerosAsignadosMap = getAsignacionTerceros(tablas);
+  const mejoresTerceros = getMejoresTerceros(tablas);
+
 console.log("DEBUG - Tablas recibidas:", tablas);
 
 // --- PUNTO 2: ESTADO DE LAS APUESTAS ---
@@ -110,69 +180,6 @@ console.log("DEBUG - Tablas recibidas:", tablas);
       ...prev,
       [`${partidoId}_${lado}`]: equipoNombre
     }));
-  };
-
-  // 1. FUNCIÓN MATEMÁTICA: Obtener ranking de mejores terceros
-  const getMejoresTerceros = () => {
-    const terceros = [];
-    const grupos = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
-    
-    grupos.forEach(letra => {
-      const nombreGrupo = `GROUP ${letra}`;
-      const tabla = tablas[nombreGrupo];
-      if (tabla && tabla[2]) {
-        terceros.push({ ...tabla[2], grupo: letra });
-      }
-    });
-
-    return terceros.sort((a, b) => {
-      if (b.pts !== a.pts) return b.pts - a.pts;
-      if (b.dg !== a.dg) return b.dg - a.dg;
-      return b.gf - a.gf;
-    }).slice(0, 8);
-  };
-
-// 2. FUNCIÓN DE ASIGNACIÓN (Lógica de Descarte con Restricciones FIFA)
-
-const getAsignacionTerceros = () => {
-    const ranking = getMejoresTerceros();
-    const asignados = {};
-    const usados = new Set();
-
-    // 1. Definimos los "asientos" disponibles (partidos)
-    const slots = [
-      { id: 'M74', permitidos: ['A', 'B', 'C', 'D', 'F'] },
-      { id: 'M77', permitidos: ['C', 'D', 'F', 'G', 'H'] },
-      { id: 'M79', permitidos: ['C', 'E', 'F', 'H', 'I'] },
-      { id: 'M80', permitidos: ['E', 'H', 'I', 'J', 'K'] },
-      { id: 'M81', permitidos: ['B', 'E', 'F', 'I', 'J'] },
-      { id: 'M82', permitidos: ['A', 'E', 'H', 'I', 'J'] },
-      { id: 'M85', permitidos: ['E', 'F', 'G', 'I', 'J'] },
-      { id: 'M87', permitidos: ['D', 'E', 'I', 'J', 'L'] }
-    ];
-
-    // 2. Ordenamos el ranking para que los grupos K y L tengan prioridad absoluta de elección
-    // Si un equipo es del grupo K o L, lo procesamos antes que a los demás para que no se queden sin sitio
-    const rankingPriorizado = [...ranking].sort((a, b) => {
-      const prioridad = { 'K': 1, 'L': 1, 'A': 2, 'B': 2, 'G': 2 };
-      const pA = prioridad[a.grupo] || 10;
-      const pB = prioridad[b.grupo] || 10;
-      return pA - pB;
-    });
-
-    // 3. Asignamos: Cada equipo busca el primer partido de su lista de permitidos que esté libre
-    rankingPriorizado.forEach(equipo => {
-      const partidoLibre = slots.find(slot => 
-        slot.permitidos.includes(equipo.grupo) && !asignados[slot.id]
-      );
-
-      if (partidoLibre) {
-        asignados[partidoLibre.id] = equipo.nombre;
-        usados.add(equipo.nombre);
-      }
-    });
-
-    return asignados;
   };
 
 // 3. DEFINICIÓN DE LA ROUND 32 (Corregida según tu auditoría)
@@ -195,9 +202,7 @@ const getAsignacionTerceros = () => {
     { id: 88, local: '2D', visitante: '2G' }
   ];
 
-  const tercerosAsignadosMap = getAsignacionTerceros();
-
-    // 4. TRADUCTOR DE CÓDIGOS A NOMBRES REALES
+      // 4. TRADUCTOR DE CÓDIGOS A NOMBRES REALES
   const getNombreReal = (codigo) => {
     if (!codigo) return '---';
     
@@ -243,8 +248,6 @@ const getAsignacionTerceros = () => {
     73, 74, 75, 76, 77, 78, 79, 80, // Lado izquierdo del cuadro
     81, 82, 83, 84, 85, 86, 87, 88  // Lado derecho del cuadro
   ];
-
-const mejoresTerceros = getMejoresTerceros();
 
   return (
     <div className="p-4 relative z-10 space-y-10">
