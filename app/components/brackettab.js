@@ -100,6 +100,8 @@ const PartidoSelectorCard = ({ partidoId, getOpciones, apuestas, onSelect, getFl
 
 export default function BracketTab({ tablas, getFlag, session }) {
 
+console.log("DEBUG - Tablas recibidas:", tablas);
+
 // --- PUNTO 2: ESTADO DE LAS APUESTAS ---
   const [apuestas, setApuestas] = useState({});
 
