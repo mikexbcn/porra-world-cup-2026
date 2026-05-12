@@ -123,10 +123,9 @@ const PartidoCard = ({ partido, getNombreReal, getFlag }) => {
   );
 };
 
-const PartidoSelectorCard = ({ partidoId, getOpciones, apuestas, onSelect, getFlag, t }) => {
-  const opcionesLocal = getOpciones(partidoId, 'local');
-  const opcionesVisitante = getOpciones(partidoId, 'visitante');
-
+  const PartidoSelectorCard = ({ partidoId, getOpciones, apuestas, onSelect, getFlag, t }) => {
+  const opcionesLocal = getOpciones(partidoId, 'local') || []; // <--- Añadimos || [] por seguridad
+  const opcionesVisitante = getOpciones(partidoId, 'visitante') || []; // <--- Añadimos || [] por seguridad
   const renderFila = (lado, opciones) => {
     const seleccionado = apuestas[`${partidoId}_${lado}`];
     return (
@@ -230,27 +229,31 @@ export default function BracketTab({ tablas, getFlag, session, t }) {
     return tablas[nombreGrupoBusqueda]?.[posicion]?.nombre || codigo;
   };
 
-const getOpcionesParaPartido = (partidoId, lado) => {
-  const config = MAPA_ELIMINATORIAS[partidoId];
-  if (!config) return [];
-  
-  // Obtenemos el ID del partido anterior (ej: para M104 local, es el M101)
-  const idPrevio = lado === 'local' ? config.local : config.visitante;
+    const getOpcionesParaPartido = (partidoId, lado) => {
+      // 1. Salida inmediata si no hay configuración
+      const config = MAPA_ELIMINATORIAS[partidoId];
+      if (!config) return [];
+      
+      const idPrevio = lado === 'local' ? config.local : config.visitante;
 
-  // CASO R32 (Los que vienen de grupos)
-  if (idPrevio >= 73 && idPrevio <= 88) {
-    const p32 = crucesR32.find(p => p.id === idPrevio);
-    return p32 ? [getNombreReal(p32.local), getNombreReal(p32.visitante)] : [];
-  }
+      // 2. CASO R32 (Equipos que vienen de grupos - Funciona bien)
+      if (idPrevio >= 73 && idPrevio <= 88) {
+        const p32 = crucesR32.find(p => p.id === idPrevio);
+        if (!p32) return [];
+        return [getNombreReal(p32.local), getNombreReal(p32.visitante)].filter(Boolean);
+      }
 
-  // CASO GENERAL (Octavos, Cuartos, Semis y Final)
-  // Buscamos qué equipos seleccionó el usuario en el partido previo
-  const opcionA = apuestas[`${idPrevio}_local`];
-  const opcionB = apuestas[`${idPrevio}_visitante`];
+      // 3. CASO ELIMINATORIAS (Octavos en adelante)
+      // Añadimos un chequeo: si el ID previo no existe en apuestas, no seguimos buscando
+      const opcionA = apuestas[`${idPrevio}_local`];
+      const opcionB = apuestas[`${idPrevio}_visitante`];
 
-  // Devolvemos los dos equipos (solo si están seleccionados)
-  return [opcionA, opcionB].filter(Boolean);
-};
+      // IMPORTANTE: Solo devolvemos si hay opciones reales para evitar que el select 
+      // intente renderizar undefined y rompa el ciclo de React
+      const opciones = [opcionA, opcionB].filter(opt => opt && typeof opt === 'string');
+      
+      return opciones;
+    };
 
   return (
     <div className="p-4 relative z-10 space-y-10">
