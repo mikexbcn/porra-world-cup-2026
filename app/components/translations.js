@@ -24,7 +24,23 @@ export const translations = {
     extra_pichichi: "👟 Bota de Oro",
     extra_gk: "🧤 Guante de Oro",
     extra_young: "👶 Mejor Jugador Joven",
-    extra_fairplay: "🤝 Premio Fair Play"
+    extra_fairplay: "🤝 Premio Fair Play",
+    // --- SECCIÓN APUESTAS (BRACKET) ---
+    thirdRanking: "Ranking Mejores Terceros",
+    waitingResults: "Esperando resultados...",
+    bracketTitle: "Eliminatorias",
+    leftBracket: "Bracket Izquierdo",
+    rightBracket: "Bracket Derecho",
+    knockoutPhase: "Fase Eliminatoria",
+    roundOf16: "Octavos de Final",
+    select: "Seleccionar...",
+    group: "Grupo",
+    loadingData: "Cargando datos de la Porra...",
+    bracketMainTitle: "CUADRO ELIMINATORIO",
+    quarterFinals: "Cuartos de Final",
+    semiFinals: "Semifinales",
+    finalTitle: "Gran Final", thirdPlaceTitle: "Tercer Puesto", confirmAll: "Cerrar Apuesta Mundial 🔒", podium_1: "Campeón", podium_2: "Subcampeón", podium_3: "Tercero", podium_4: "Cuarto",
+    podium_title: "PÓDIUM FINAL", 
   },
   ca: { 
     title: "MUNDIAL", predictions: "Partits", honor: "Premis", logout: "Sortir", save: "Confirmar 🔒", saveExtras: "Guardar 🏆", vip: "INTRODUEIX EL TEU TOKEN", loginBtn: "Entrar", signupBtn: "Crear Compte", email: "Correu", pass: "Contrasenya", user: "Usuari", welcome: "Hola!", already: "Ja tens compte?", useToken: "Tinc un Token", ranking: "Rànquing", tableTitle: "Posicions", validate: "Validar Token", loginLink: "Entrar", backToken: "Tornar al Token", loading: "CARREGANT...",
@@ -51,7 +67,22 @@ export const translations = {
     extra_pichichi: "👟 Bota d'Or",
     extra_gk: "🧤 Guant d'Or",
     extra_young: "👶 Millor Jugador Jove",
-    extra_fairplay: "🤝 Premi Fair Play"
+    extra_fairplay: "🤝 Premi Fair Play",
+    // --- SECCIÓN APOSTES (BRACKET) ---
+    thirdRanking: "Rànquing Millors Tercers",
+    waitingResults: "Esperant resultats...",
+    bracketTitle: "Eliminatòries",
+    leftBracket: "Quadre Esquerre",
+    rightBracket: "Quadre Dret",
+    knockoutPhase: "Fase Eliminatòria",
+    roundOf16: "Vuitens de Final",
+    select: "Seleccionar...",
+    group: "Grup",
+    loadingData: "Carregant dades de la Porra...",
+    bracketMainTitle: "QUADRE ELIMINATORI",
+    quarterFinals: "Quarts de Final",
+    semiFinals: "Semifinals", finalTitle: "Gran Final", thirdPlaceTitle: "Tercer Lloc", confirmAll: "Tancar Aposta Mundial 🔒", podium_1: "Campió", podium_2: "Subcampió", podium_3: "Tercer", podium_4: "Quart",
+    podium_title: "PÒDIUM FINAL",
   },
   en: { 
     title: "WORLD CUP", predictions: "Matches", honor: "Prizes", logout: "Logout", save: "Confirm 🔒", saveExtras: "Save 🏆", vip: "ENTER YOUR TOKEN", loginBtn: "Login", signupBtn: "Sign Up", email: "Email", pass: "Password", user: "Username", welcome: "Hi!", already: "Have an account?", useToken: "Use Token", ranking: "Ranking", tableTitle: "Standings", validate: "Validate Token", loginLink: "Login", backToken: "Back to Token", loading: "LOADING...",
@@ -78,6 +109,21 @@ export const translations = {
     extra_pichichi: "👟 Golden Boot",
     extra_gk: "🧤 Golden Glove",
     extra_young: "👶 Best Young Player",
-    extra_fairplay: "🤝 Fair Play Award"
+    extra_fairplay: "🤝 Fair Play Award",
+    // --- BETS SECTION (BRACKET) ---
+    thirdRanking: "Best Third-Placed Teams",
+    waitingResults: "Waiting for results...",
+    bracketTitle: "Knockout Stage",
+    leftBracket: "Left Bracket",
+    rightBracket: "Right Bracket",
+    knockoutPhase: "Knockout Phase",
+    roundOf16: "Round of 16",
+    select: "Select...",
+    group: "Group",
+    loadingData: "Loading data...",
+    bracketMainTitle: "KNOCKOUT BRACKET",
+    quarterFinals: "Quarter-Finals",
+    semiFinals: "Semi-Finals",finalTitle: "Grand Final", thirdPlaceTitle: "Third Place Play-off", confirmAll: "Lock World Cup Bets 🔒", podium_1: "Champion", podium_2: "Runner-up", podium_3: "Third Place", podium_4: "Fourth Place",
+    podium_title: "FINAL PODIUM"
   }
 };

@@ -11,10 +11,12 @@ const MAPA_ELIMINATORIAS = {
   97: { local: 89, visitante: 90 }, 98: { local: 91, visitante: 92 },
   99: { local: 93, visitante: 94 }, 100: { local: 95, visitante: 96 },
   // SEMI-FINALS
-  101: { local: 97, visitante: 98 }, 102: { local: 99, visitante: 100 },
+  101: { local: 97, visitante: 98 }, 
+  102: { local: 99, visitante: 100 },
   // 3rd PLACE & FINAL
-  103: { local: 101, visitante: 102, perdedores: true }, // Play-off 3º
-  104: { local: 101, visitante: 102 } // Final
+  // Ambos partidos se alimentan de los mismos semifinalistas (M101 y M102)
+  103: { local: 101, visitante: 102 }, // 3er Puesto
+  104: { local: 101, visitante: 102 }  // Final
 };
 
   // 1. FUNCIÓN MATEMÁTICA: Obtener ranking de mejores terceros
@@ -121,7 +123,7 @@ const PartidoCard = ({ partido, getNombreReal, getFlag }) => {
   );
 };
 
-const PartidoSelectorCard = ({ partidoId, getOpciones, apuestas, onSelect, getFlag }) => {
+const PartidoSelectorCard = ({ partidoId, getOpciones, apuestas, onSelect, getFlag, t }) => {
   const opcionesLocal = getOpciones(partidoId, 'local');
   const opcionesVisitante = getOpciones(partidoId, 'visitante');
 
@@ -139,7 +141,7 @@ const PartidoSelectorCard = ({ partidoId, getOpciones, apuestas, onSelect, getFl
           value={seleccionado || ""}
           onChange={(e) => onSelect(partidoId, lado, e.target.value)}
         >
-          <option value="" className="bg-[#0a0a0a]">Seleccionar...</option>
+          <option value="" className="bg-[#0a0a0a]">{t.select || 'Seleccionar...'}</option>
           {opciones.map(opt => (
             <option key={opt} value={opt} className="bg-[#0a0a0a]">{opt}</option>
           ))}
@@ -164,18 +166,19 @@ const PartidoSelectorCard = ({ partidoId, getOpciones, apuestas, onSelect, getFl
   );
 };
 
-export default function BracketTab({ tablas, getFlag, session }) {
+export default function BracketTab({ tablas, getFlag, session, t }) {
 
   // 1. ESTADO DE LAS APUESTAS
   const [apuestas, setApuestas] = useState({});
 
   // 2. SEGURO DE CARGA: Si no hay tablas, mostramos un cargando
   if (!tablas || Object.keys(tablas).length === 0) {
-    console.log("DEBUG - Esperando tablas...");
     return (
       <div className="flex flex-col items-center justify-center p-20 text-white">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mb-4"></div>
-        <p className="text-xs font-black uppercase tracking-widest italic">Cargando datos de la Porra...</p>
+        <p className="text-xs font-black uppercase tracking-widest italic">
+          {t.loadingData || 'Cargando datos...'}
+        </p>      
       </div>
     );
   }
@@ -212,27 +215,42 @@ export default function BracketTab({ tablas, getFlag, session }) {
     { id: 88, local: '2D', visitante: '2G' }
   ];
 
+// AJUSTE EN getNombreReal para los Grupos
   const getNombreReal = (codigo) => {
     if (!codigo) return '---';
     if (codigo.startsWith('M')) return tercerosAsignadosMap[codigo] || '3º ' + codigo.replace('M', '');
+    
     const posicion = parseInt(codigo[0]) - 1;
     const letraGrupo = codigo[1];
-    const nombreGrupo = `GROUP ${letraGrupo}`;
-    return tablas[nombreGrupo]?.[posicion]?.nombre || codigo;
+    
+    // Aquí usamos el nombre del grupo traducido (ej: GRUPO, GROUP, GRUP)
+    const nombreGrupoBase = t.group || 'GROUP'; 
+    const nombreGrupoBusqueda = `GROUP ${letraGrupo}`; // Para buscar en la DB siempre usamos inglés
+    
+    return tablas[nombreGrupoBusqueda]?.[posicion]?.nombre || codigo;
   };
 
-  const getOpcionesParaPartido = (partidoId, lado) => {
-    const config = MAPA_ELIMINATORIAS[partidoId];
-    if (!config) return [];
-    const idPrevio = lado === 'local' ? config.local : config.visitante;
-    if (idPrevio >= 73 && idPrevio <= 88) {
-      const p32 = crucesR32.find(p => p.id === idPrevio);
-      return p32 ? [getNombreReal(p32.local), getNombreReal(p32.visitante)] : [];
-    }
-    const opcionA = apuestas[`${idPrevio}_local`];
-    const opcionB = apuestas[`${idPrevio}_visitante`];
-    return [opcionA, opcionB].filter(Boolean);
-  };
+const getOpcionesParaPartido = (partidoId, lado) => {
+  const config = MAPA_ELIMINATORIAS[partidoId];
+  if (!config) return [];
+  
+  // Obtenemos el ID del partido anterior (ej: para M104 local, es el M101)
+  const idPrevio = lado === 'local' ? config.local : config.visitante;
+
+  // CASO R32 (Los que vienen de grupos)
+  if (idPrevio >= 73 && idPrevio <= 88) {
+    const p32 = crucesR32.find(p => p.id === idPrevio);
+    return p32 ? [getNombreReal(p32.local), getNombreReal(p32.visitante)] : [];
+  }
+
+  // CASO GENERAL (Octavos, Cuartos, Semis y Final)
+  // Buscamos qué equipos seleccionó el usuario en el partido previo
+  const opcionA = apuestas[`${idPrevio}_local`];
+  const opcionB = apuestas[`${idPrevio}_visitante`];
+
+  // Devolvemos los dos equipos (solo si están seleccionados)
+  return [opcionA, opcionB].filter(Boolean);
+};
 
   return (
     <div className="p-4 relative z-10 space-y-10">
@@ -240,7 +258,7 @@ export default function BracketTab({ tablas, getFlag, session }) {
       {/* RANKING DE TERCEROS */}
       <div className="bg-black/80 backdrop-blur-xl rounded-3xl p-8 border border-yellow-500/20 max-w-2xl mx-auto shadow-2xl">
         <h3 className="text-yellow-500 font-black text-center uppercase text-lg mb-8 tracking-[0.3em] italic">
-          Ranking Mejores Terceros
+          {t.thirdRanking || 'Ranking Mejores Terceros'}
         </h3>
         <div className="grid gap-3">
           {(mejoresTerceros || []).length > 0 ? (mejoresTerceros || []).map((equipo, index) => (
@@ -256,7 +274,7 @@ export default function BracketTab({ tablas, getFlag, session }) {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-sm font-black uppercase tracking-wider">{equipo.nombre}</span>
-                  <span className="text-[10px] text-gray-400 font-bold">GRUPO {equipo.grupo}</span>
+                  <span className="text-[10px] text-gray-400 font-bold">{(t.group || 'GRUPO').toUpperCase()} {equipo.grupo}</span>
                 </div>
               </div>
               <div className="flex gap-6 items-center">
@@ -271,7 +289,7 @@ export default function BracketTab({ tablas, getFlag, session }) {
               </div>
             </div>
           )) : (
-            <p className="text-center text-gray-500 py-10 italic uppercase text-xs">Esperando resultados...</p>
+            <p className="text-center text-gray-500 py-10 italic uppercase text-xs">{t.waitingResults || 'Esperando resultados...'}</p>
           )}
         </div>
       </div>
@@ -280,7 +298,7 @@ export default function BracketTab({ tablas, getFlag, session }) {
       <div className="max-w-7xl mx-auto px-2">
         <div className="flex flex-col items-center mb-12">
           <h2 className="text-3xl md:text-5xl font-black italic text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40 uppercase tracking-tighter">
-            Eliminatorias
+            {t.bracketMainTitle || 'Eliminatorias'}
           </h2>
           <div className="h-1 w-24 bg-yellow-500 mt-2 rounded-full shadow-[0_0_15px_rgba(234,179,8,0.5)]"></div>
         </div>
@@ -293,7 +311,7 @@ export default function BracketTab({ tablas, getFlag, session }) {
 
           {/* LADO IZQUIERDO (Partidos 73-80) */}
           <div className="space-y-6">
-            <h4 className="text-center text-[10px] font-black tracking-[0.4em] uppercase text-gray-500 mb-8 italic">Bracket Izquierdo</h4>
+            <h4 className="text-center text-[10px] font-black tracking-[0.4em] uppercase text-gray-500 mb-8 italic">{t.leftBracket || 'Bracket Izquierdo'}</h4>
             {crucesR32.slice(0, 8).map((partido) => (
               <PartidoCard key={partido.id} partido={partido} getNombreReal={getNombreReal} getFlag={getFlag} />
             ))}
@@ -301,7 +319,7 @@ export default function BracketTab({ tablas, getFlag, session }) {
 
           {/* LADO DERECHO (Partidos 81-88) */}
           <div className="space-y-6">
-            <h4 className="text-center text-[10px] font-black tracking-[0.4em] uppercase text-gray-500 mb-8 italic">Bracket Derecho</h4>
+            <h4 className="text-center text-[10px] font-black tracking-[0.4em] uppercase text-gray-500 mb-8 italic">{t.rightBracket || 'Bracket Derecho'}</h4>
             {crucesR32.slice(8, 16).map((partido) => (
               <PartidoCard key={partido.id} partido={partido} getNombreReal={getNombreReal} getFlag={getFlag} />
             ))}
@@ -310,9 +328,9 @@ export default function BracketTab({ tablas, getFlag, session }) {
 {/* SECCIÓN OCTAVOS DE FINAL (ROUND 16) */}
       <div className="mt-32 max-w-7xl mx-auto px-2 pb-20">
         <div className="flex flex-col items-center mb-12">
-          <span className="text-yellow-500 text-[10px] font-black tracking-[0.5em] uppercase mb-2">Fase Eliminatoria</span>
+          <span className="text-yellow-500 text-[10px] font-black tracking-[0.5em] uppercase mb-2">{t.knockoutPhase || 'Fase Eliminatoria'}</span>
           <h2 className="text-2xl md:text-4xl font-black italic text-white uppercase tracking-tighter">
-            Round of 16
+            {t.roundOf16 || 'Round of 16'}
           </h2>
           <div className="h-1 w-12 bg-white/20 mt-4 rounded-full"></div>
         </div>
@@ -326,10 +344,180 @@ export default function BracketTab({ tablas, getFlag, session }) {
               apuestas={apuestas}
               onSelect={handleEleccion}
               getFlag={getFlag}
+              t={t}
             />
           ))}
         </div>
       </div>
+
+    {/* SECCIÓN CUARTOS DE FINAL (QUARTER-FINALS) */}
+    <div className="mt-32 max-w-7xl mx-auto px-2 pb-20">
+      <div className="flex flex-col items-center mb-12">
+        <span className="text-yellow-500 text-[10px] font-black tracking-[0.5em] uppercase mb-2">
+          {t.knockoutPhase || 'Fase Eliminatoria'}
+        </span>
+        <h2 className="text-2xl md:text-4xl font-black italic text-white uppercase tracking-tighter">
+          {t.quarterFinals || 'Quarter-Finals'}
+        </h2>
+        <div className="h-1 w-12 bg-white/20 mt-4 rounded-full"></div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Usamos los IDs que definiste: 97, 98, 99, 100 */}
+        {[97, 98, 99, 100].map(id => (
+          <PartidoSelectorCard 
+            key={id}
+            partidoId={id}
+            getOpciones={getOpcionesParaPartido}
+            apuestas={apuestas}
+            onSelect={handleEleccion}
+            getFlag={getFlag}
+            t={t}
+          />
+        ))}
+      </div>
+    </div>
+
+    {/* SECCIÓN SEMIFINALES (SEMI-FINALS) */}
+    <div className="mt-32 max-w-7xl mx-auto px-2 pb-20">
+      <div className="flex flex-col items-center mb-12">
+        <span className="text-yellow-500 text-[10px] font-black tracking-[0.5em] uppercase mb-2">
+          {t.knockoutPhase || 'Fase Eliminatoria'}
+        </span>
+        <h2 className="text-2xl md:text-4xl font-black italic text-white uppercase tracking-tighter">
+          {t.semiFinals || 'Semi-Finals'}
+        </h2>
+        <div className="h-1 w-12 bg-white/20 mt-4 rounded-full"></div>
+      </div>
+
+      {/* Centramos las semis en el grid para que visualmente se vea la progresión */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-4xl mx-auto">
+        {[101, 102].map(id => (
+          <PartidoSelectorCard 
+            key={id}
+            partidoId={id}
+            getOpciones={getOpcionesParaPartido}
+            apuestas={apuestas}
+            onSelect={handleEleccion}
+            getFlag={getFlag}
+            t={t}
+          />
+        ))}
+      </div>
+    </div>
+
+    {/* --- SECCIÓN FINAL Y TERCER PUESTO --- */}
+    <div className="mt-32 max-w-7xl mx-auto px-2">
+      <div className="flex flex-col items-center mb-12">
+        <span className="text-yellow-500 text-[10px] font-black tracking-[0.5em] uppercase mb-2">
+          {t.knockoutPhase || 'Fase Eliminatoria'}
+        </span>
+        <h2 className="text-2xl md:text-4xl font-black italic text-white uppercase tracking-tighter">
+          {t.finalTitle || 'Finales'}
+        </h2>
+        <div className="h-1 w-12 bg-white/20 mt-4 rounded-full"></div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-4xl mx-auto">
+        {/* Partido 103: Tercer Puesto */}
+        <div>
+          <p className="text-center text-[10px] font-black text-gray-500 uppercase mb-4 tracking-widest">
+            {t.thirdPlaceTitle || '3er y 4º Puesto'}
+          </p>
+          <PartidoSelectorCard 
+            partidoId={103}
+            getOpciones={getOpcionesParaPartido}
+            apuestas={apuestas}
+            onSelect={handleEleccion}
+            getFlag={getFlag}
+            t={t}
+          />
+        </div>
+
+        {/* Partido 104: Gran Final */}
+        <div>
+          <p className="text-center text-[10px] font-black text-yellow-500 uppercase mb-4 tracking-widest">
+            {t.finalTitle || 'Gran Final'}
+          </p>
+          <PartidoSelectorCard 
+            partidoId={104}
+            getOpciones={getOpcionesParaPartido}
+            apuestas={apuestas}
+            onSelect={handleEleccion}
+            getFlag={getFlag}
+            t={t}
+          />
+        </div>
+      </div>
+    </div>
+
+{/* --- SECCIÓN PÓDIUM FINAL --- */}
+<div className="mt-32 max-w-2xl mx-auto pb-40 px-4">
+  <div className="bg-[#0a0a0a] border border-yellow-500/30 rounded-[40px] p-8 md:p-12 shadow-[0_0_50px_rgba(234,179,8,0.1)] relative overflow-hidden">
+    
+    <h3 className="text-center font-black italic text-yellow-500 mb-12 uppercase tracking-[0.4em] text-2xl">
+      {t.podium_title || 'Pódium Final'}
+    </h3>
+
+    <div className="space-y-6">
+      {[
+        { label: t.podium_1, key: 'winner_1', partidoRef: 104, icon: '🏆', color: 'border-yellow-500/50 text-yellow-500' },
+        { label: t.podium_2, key: 'winner_2', partidoRef: 104, icon: '🥈', color: 'border-gray-400/30 text-gray-300' },
+        { label: t.podium_3, key: 'winner_3', partidoRef: 103, icon: '🥉', color: 'border-orange-700/30 text-orange-400' },
+        { label: t.podium_4, key: 'winner_4', partidoRef: 103, icon: '🏅', color: 'border-white/10 text-gray-500' },
+      ].map((pos) => {
+        // Obtenemos los dos equipos que el usuario puso en el partido 104 o 103
+        const opciones = [
+          apuestas[`${pos.partidoRef}_local`],
+          apuestas[`${pos.partidoRef}_visitante`]
+        ].filter(Boolean);
+
+        return (
+          <div key={pos.key} className={`flex flex-col md:flex-row items-center gap-4 p-4 rounded-2xl border ${pos.color} bg-white/[0.02]`}>
+            <div className="flex items-center gap-4 w-full md:w-40">
+              <span className="text-2xl">{pos.icon}</span>
+              <span className="text-[10px] font-black uppercase tracking-widest">{pos.label}</span>
+            </div>
+            
+            {/* AQUÍ ESTÁ EL SELECT CORREGIDO */}
+            <select
+              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm font-black uppercase tracking-wider text-white outline-none focus:border-yellow-500 transition-all appearance-none cursor-pointer"
+              value={apuestas[pos.key] || ""}
+              onChange={(e) => {
+                setApuestas(prev => ({
+                  ...prev,
+                  [pos.key]: e.target.value
+                }));
+              }}
+            >
+              <option value="" className="bg-[#0a0a0a]">{t.select || 'Seleccionar...'}</option>
+              {opciones.map(opt => (
+                <option key={opt} value={opt} className="bg-[#0a0a0a]">{opt}</option>
+              ))}
+            </select>
+          </div>
+        );
+      })}
+    </div>
+
+    {/* BOTÓN DE CIERRE MAESTRO */}
+    <div className="mt-16">
+      <p className="text-[9px] text-gray-500 text-center uppercase font-bold mb-4 italic tracking-widest">
+        Al confirmar, tu apuesta quedará bloqueada para el resto del Mundial
+      </p>
+      <button 
+        onClick={() => {
+          console.log("APUESTA TOTAL A ENVIAR:", apuestas);
+          alert("¡Apuesta guardada con éxito! Secciones bloqueadas.");
+        }}
+        className="w-full py-5 bg-yellow-500 hover:bg-yellow-400 text-black font-black uppercase italic tracking-[0.2em] rounded-2xl transition-all shadow-[0_10px_30px_rgba(234,179,8,0.2)] active:scale-95"
+      >
+        {t.confirmAll || 'Cerrar Apuesta Mundial 🔒'}
+      </button>
+    </div>
+  </div>
+</div>
+
 
       </div>
 

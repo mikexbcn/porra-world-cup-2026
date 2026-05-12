@@ -198,12 +198,13 @@ return (
 {tab === 'bets' && (
   <div className="animate-fade-in relative z-10">
     <h2 className="text-xl font-black text-yellow-500 uppercase mb-8 text-center italic tracking-widest">
-      {t.cuadroMaestro || 'Cuadro Eliminatorio'}
+      {t.bracketMainTitle || 'Cuadro Eliminatorio'}
     </h2>
     <BracketTab 
       tablas={tablas} 
       getFlag={getFlag} 
       session={session} 
+      t={t}
     />
   </div>
 )}
