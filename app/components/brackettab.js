@@ -165,10 +165,17 @@ const PartidoCard = ({ partido, getNombreReal, getFlag }) => {
   );
 };
 
-export default function BracketTab({ tablas, getFlag, session, t }) {
+export default function BracketTab({ tablas, getFlag, session, t, apuestasGuardadas }) {
 
   // 1. ESTADO DE LAS APUESTAS
   const [apuestas, setApuestas] = useState({});
+
+  // Este efecto "escucha" cuando llegan los datos de la base de datos y los pone en el cuadro
+  useEffect(() => {
+    if (apuestasGuardadas && Object.keys(apuestasGuardadas).length > 0) {
+      setApuestas(apuestasGuardadas);
+    }
+  }, [apuestasGuardadas]);
 
   // 2. SEGURO DE CARGA: Si no hay tablas, mostramos un cargando
   if (!tablas || Object.keys(tablas).length === 0) {
@@ -188,11 +195,30 @@ export default function BracketTab({ tablas, getFlag, session, t }) {
   
   console.log("DEBUG - Tablas recibidas:", tablas);
 
-  const handleEleccion = (partidoId, lado, equipoNombre) => {
+const handleEleccion = async (partidoId, lado, equipoNombre) => {
+    // 1. Actualizamos la pantalla (lo que ya tenías)
+    const nuevaClave = `${partidoId}_${lado}`;
     setApuestas(prev => ({
       ...prev,
-      [`${partidoId}_${lado}`]: equipoNombre
+      [nuevaClave]: equipoNombre
     }));
+
+    // 2. Guardamos en la base de datos
+    try {
+      const { error } = await supabase
+        .from('predictions')
+        .upsert({
+          user_id: session.user.id,
+          match_id: nuevaClave, // Guardamos la clave completa (ej: "97_local")
+          selected_team: equipoNombre, // La nueva columna que creamos
+        });
+
+      if (error) {
+        console.error("Error guardando elección:", error);
+      }
+    } catch (err) {
+      console.error("Error crítico en handleEleccion:", err);
+    }
   };
 
   const crucesR32 = [

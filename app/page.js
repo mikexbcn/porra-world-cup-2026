@@ -32,6 +32,7 @@ export default function Home() {
   const [tab, setTab] = useState('rules');
   const [partidos, setPartidos] = useState([]);
   const [pronosticos, setPronosticos] = useState({});
+  const [apuestasBracket, setApuestasBracket] = useState({});
   const [tablas, setTablas] = useState({});
   const [perfil, setPerfil] = useState(null);
   const [activePhase, setActivePhase] = useState('GROUP A');
@@ -86,18 +87,29 @@ async function fetchAllData(userId) {
       const { data: m } = await supabase.from('matches').select('*').order('match_date', { ascending: true });
       setPartidos(m || []);
 
-      // Predicciones (AQUÍ ESTÁ EL ARREGLO)
+// --- Predicciones (Goles + Equipos del Bracket) ---
       const { data: pr } = await supabase.from('predictions').select('*').eq('user_id', userId);
-      const pMap = {};
+      const pMap = {}; // Para los goles (Grupos)
+      const aMap = {}; // Para los equipos (Cruces)
+
       if (pr) {
         pr.forEach(x => { 
-          pMap[x.match_id] = { 
-            h: x.prediction_home !== null ? x.prediction_home.toString() : '', 
-            a: x.prediction_away !== null ? x.prediction_away.toString() : '' 
-          }; 
+          // Si hay goles, se guardan en el mapa de goles
+          if (x.prediction_home !== null) {
+            pMap[x.match_id] = { 
+              h: x.prediction_home.toString(), 
+              a: x.prediction_away !== null ? x.prediction_away.toString() : '' 
+            };
+          }
+
+          // SI HAY UN EQUIPO SELECCIONADO (Cruces), lo guardamos en el mapa del bracket
+          if (x.selected_team) {
+            aMap[x.match_id] = x.selected_team;
+          }
         });
       }
       setPronosticos(pMap);
+      setApuestasBracket(aMap); // Ahora sí tenemos los datos del cuadro
 
       // Extras
       const { data: ex } = await supabase.from('extra_predictions').select('*').eq('user_id', userId).maybeSingle();
@@ -205,6 +217,7 @@ return (
       getFlag={getFlag} 
       session={session} 
       t={t}
+      apuestasGuardadas={apuestasBracket} // <--- PASAMOS LA BOLSA CON LOS DATOS
     />
   </div>
 )}
