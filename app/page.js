@@ -94,22 +94,27 @@ async function fetchAllData(userId) {
 
       if (pr) {
         pr.forEach(x => { 
-          // Si hay goles, se guardan en el mapa de goles
-          if (x.prediction_home !== null) {
+          // 1. BLINDAJE PARA GOLES: Solo hacemos toString si el valor existe (no es null ni undefined)
+          if (x.prediction_home !== null && x.prediction_home !== undefined) {
             pMap[x.match_id] = { 
               h: x.prediction_home.toString(), 
-              a: x.prediction_away !== null ? x.prediction_away.toString() : '' 
+              // Aquí también blindamos el away por si acaso
+              a: (x.prediction_away !== null && x.prediction_away !== undefined) ? x.prediction_away.toString() : '' 
             };
           }
 
-          // SI HAY UN EQUIPO SELECCIONADO (Cruces), lo guardamos en el mapa del bracket
+          // 2. BLINDAJE PARA EQUIPOS (Bracket):
           if (x.selected_team) {
-            aMap[x.match_id] = x.selected_team;
+            // Usamos String() por si el ID del match viniera como número, para que no falle el mapa
+            const mId = x.match_id ? x.match_id.toString() : '';
+            if (mId) {
+              aMap[mId] = x.selected_team;
+            }
           }
         });
       }
       setPronosticos(pMap);
-      setApuestasBracket(aMap); // Ahora sí tenemos los datos del cuadro
+      setApuestasBracket(aMap);
 
       // Extras
       const { data: ex } = await supabase.from('extra_predictions').select('*').eq('user_id', userId).maybeSingle();

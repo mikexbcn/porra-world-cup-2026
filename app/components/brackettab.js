@@ -196,28 +196,32 @@ export default function BracketTab({ tablas, getFlag, session, t, apuestasGuarda
   console.log("DEBUG - Tablas recibidas:", tablas);
 
 const handleEleccion = async (partidoId, lado, equipoNombre) => {
-    // 1. Actualizamos la pantalla (lo que ya tenías)
     const nuevaClave = `${partidoId}_${lado}`;
+
+    // 1. Actualización visual inmediata
     setApuestas(prev => ({
       ...prev,
       [nuevaClave]: equipoNombre
     }));
 
-    // 2. Guardamos en la base de datos
+    // 2. Guardado en Supabase
     try {
       const { error } = await supabase
         .from('predictions')
-        .upsert({
-          user_id: session.user.id,
-          match_id: nuevaClave, // Guardamos la clave completa (ej: "97_local")
-          selected_team: equipoNombre, // La nueva columna que creamos
-        });
+        .upsert(
+          {
+            user_id: session.user.id,
+            match_id: String(nuevaClave),
+            selected_team: String(equipoNombre),
+          },
+          { onConflict: 'user_id,match_id' }
+        );
 
       if (error) {
-        console.error("Error guardando elección:", error);
+        console.error("Error en upsert:", error);
       }
     } catch (err) {
-      console.error("Error crítico en handleEleccion:", err);
+      console.error("Error en handleEleccion:", err);
     }
   };
 

@@ -3,27 +3,30 @@ import { supabase } from '../../supabaseClient'
 
 export default function ExtrasTab({ t, extras, setExtras, session, setLoading }) {
   
-  const handleSaveExtras = async () => {
+const handleSaveExtras = async () => {
     if (session?.user?.email === 'demo@mundial.com') return alert("Modo DEMO");
     setLoading(true);
     try {
-      // Sincronizado exactamente con tus columnas de Supabase:
-      // user_id / top_scorer / best_keeper / best_player / fair_play / best_young / champion
-      const { error } = await supabase.from('extra_predictions').upsert({
-        user_id: session.user.id,
-        top_scorer: extras.top_scorer,    // Antes pichichi
-        best_player: extras.best_player,  // Antes mvp
-        best_keeper: extras.best_keeper,
-        best_young: extras.best_young,
-        fair_play: extras.fair_play,
-        champion: extras.champion,        // Lo mantenemos ya que tienes la columna
-      });
+      const { error } = await supabase
+        .from('extra_predictions')
+        .upsert(
+          {
+            user_id: session.user.id,
+            top_scorer: extras.top_scorer,
+            best_player: extras.best_player,
+            best_keeper: extras.best_keeper,
+            best_young: extras.best_young,
+            fair_play: extras.fair_play,
+            champion: extras.champion,
+          },
+          { onConflict: 'user_id' } // <--- ESTO ES LO QUE FALTA
+        );
 
       if (error) throw error;
-      alert("Extras guardados ✓");
+      alert("¡Premios extra guardados!");
     } catch (err) {
-      console.error(err);
-      alert("Error al guardar");
+      console.error("Error guardando extras:", err);
+      alert("Error al guardar: " + err.message);
     } finally {
       setLoading(false);
     }
