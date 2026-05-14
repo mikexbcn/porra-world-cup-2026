@@ -85,18 +85,22 @@ const getAsignacionTerceros = (datostablas) => {
     return asignados;
   };
 
-const PartidoCard = ({ partido, getNombreReal, getFlag }) => {
+const PartidoCard = ({ partido, getNombreReal, getFlag, isLockedFinal }) => {
   const local = getNombreReal(partido.local);
   const visitante = getNombreReal(partido.visitante);
 
   return (
-    <div className="relative group">
+    <div className={`relative group ${isLockedFinal ? 'pointer-events-none' : ''}`}>
       {/* ID del Partido flotante */}
-      <div className="absolute -top-3 left-6 z-20 px-3 py-0.5 bg-yellow-500 rounded-full shadow-lg">
+      <div className={`absolute -top-3 left-6 z-20 px-3 py-0.5 rounded-full shadow-lg ${isLockedFinal ? 'bg-gray-600' : 'bg-yellow-500'}`}>
         <span className="text-[9px] font-black text-black italic">M{partido.id}</span>
       </div>
 
-      <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl overflow-hidden hover:border-yellow-500/50 transition-all duration-300 shadow-xl group-hover:shadow-yellow-500/5">
+      <div className={`bg-[#0a0a0a] border rounded-2xl overflow-hidden transition-all duration-300 shadow-xl ${
+        isLockedFinal 
+          ? 'border-white/5 opacity-60' 
+          : 'border-white/10 hover:border-yellow-500/50 group-hover:shadow-yellow-500/5'
+      }`}>
         {/* Local */}
         <div className="flex items-center justify-between p-4 border-b border-white/5">
           <div className="flex items-center gap-4">
@@ -123,20 +127,26 @@ const PartidoCard = ({ partido, getNombreReal, getFlag }) => {
   );
 };
 
-  const PartidoSelectorCard = ({ partidoId, getOpciones, apuestas, onSelect, getFlag, t }) => {
-  const opcionesLocal = getOpciones(partidoId, 'local') || []; // <--- Añadimos || [] por seguridad
-  const opcionesVisitante = getOpciones(partidoId, 'visitante') || []; // <--- Añadimos || [] por seguridad
+const PartidoSelectorCard = ({ partidoId, getOpciones, apuestas, onSelect, getFlag, t, isLockedFinal }) => {
+  const opcionesLocal = getOpciones(partidoId, 'local') || [];
+  const opcionesVisitante = getOpciones(partidoId, 'visitante') || [];
+
   const renderFila = (lado, opciones) => {
     const seleccionado = apuestas[`${partidoId}_${lado}`];
     return (
-      <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10 hover:border-yellow-500/30 transition-all group/row">
+      <div className={`flex items-center gap-3 p-3 bg-white/5 rounded-xl border transition-all ${
+        isLockedFinal ? 'border-white/5 opacity-50' : 'border-white/10 hover:border-yellow-500/30 group/row'
+      }`}>
         <div className="w-8 h-5 bg-black/40 rounded overflow-hidden flex-shrink-0 border border-white/5">
           {seleccionado && (
             <img src={getFlag(seleccionado).props?.src || getFlag(seleccionado)} alt="" className="w-full h-full object-cover" />
           )}
         </div>
         <select 
-          className="bg-transparent text-[11px] font-black uppercase tracking-wider text-white outline-none cursor-pointer w-full appearance-none"
+          disabled={isLockedFinal} 
+          className={`bg-transparent text-[11px] font-black uppercase tracking-wider text-white outline-none w-full appearance-none ${
+            isLockedFinal ? 'cursor-not-allowed' : 'cursor-pointer'
+          }`}
           value={seleccionado || ""}
           onChange={(e) => onSelect(partidoId, lado, e.target.value)}
         >
@@ -151,10 +161,14 @@ const PartidoCard = ({ partido, getNombreReal, getFlag }) => {
 
   return (
     <div className="relative group">
-       <div className="absolute -top-2 left-4 z-20 px-2 py-0.5 bg-yellow-500 rounded border border-black/10">
+      <div className={`absolute -top-2 left-4 z-20 px-2 py-0.5 rounded border border-black/10 ${
+        isLockedFinal ? 'bg-gray-600' : 'bg-yellow-500'
+      }`}>
         <span className="text-[8px] font-black text-black italic">M{partidoId}</span>
       </div>
-      <div className="space-y-1 bg-[#0a0a0a] p-4 pt-5 rounded-2xl border border-white/5 shadow-xl group-hover:border-white/20 transition-all">
+      <div className={`space-y-1 bg-[#0a0a0a] p-4 pt-5 rounded-2xl border border-white/5 shadow-xl transition-all ${
+        !isLockedFinal && 'group-hover:border-white/20'
+      }`}>
         {renderFila('local', opcionesLocal)}
         <div className="py-1 flex justify-center">
             <span className="text-[9px] font-bold text-gray-600 italic tracking-widest">VS</span>
@@ -166,10 +180,13 @@ const PartidoCard = ({ partido, getNombreReal, getFlag }) => {
 };
 
 export default function BracketTab({ tablas, getFlag, session, t, apuestasGuardadas }) {
+  // Solo esta línea. Sin "React.", sin "useState" y sin duplicados.
+  const isLockedFinal = Array.isArray(apuestasGuardadas) 
+    ? apuestasGuardadas.some(a => a.match_id === 'config_lock') 
+    : false;
 
   // 1. ESTADO DE LAS APUESTAS
   const [apuestas, setApuestas] = useState({});
-
   // Este efecto "escucha" cuando llegan los datos de la base de datos y los pone en el cuadro
   useEffect(() => {
     if (apuestasGuardadas && Object.keys(apuestasGuardadas).length > 0) {
@@ -196,32 +213,36 @@ export default function BracketTab({ tablas, getFlag, session, t, apuestasGuarda
   console.log("DEBUG - Tablas recibidas:", tablas);
 
 const handleEleccion = async (partidoId, lado, equipoNombre) => {
+    // 1. EL CANDADO DEBE IR AQUÍ (PRIMERA LÍNEA)
+    if (isLockedFinal) return; 
+    
     const nuevaClave = `${partidoId}_${lado}`;
+    
+    // 2. Si el código llega aquí, es que NO está bloqueado y puede cambiar la web
+    setApuestas(prev => ({ ...prev, [nuevaClave]: equipoNombre }));
 
-    // 1. Actualización visual inmediata
-    setApuestas(prev => ({
-      ...prev,
-      [nuevaClave]: equipoNombre
-    }));
-
-    // 2. Guardado en Supabase
     try {
+      // 2. Intento de guardado
       const { error } = await supabase
         .from('predictions')
-        .upsert(
-          {
-            user_id: session.user.id,
-            match_id: String(nuevaClave),
-            selected_team: String(equipoNombre),
-          },
-          { onConflict: 'user_id,match_id' }
-        );
+        .upsert({
+          user_id: session.user.id,
+          match_id: String(nuevaClave), 
+          selected_team: equipoNombre,
+          prediction_home: null,
+          prediction_away: null
+        }, { 
+          onConflict: 'user_id,match_id' 
+        });
 
       if (error) {
-        console.error("Error en upsert:", error);
+        console.error("❌ ERROR SUPABASE:", error.message);
+        alert("Error al guardar: " + error.message);
+      } else {
+        console.log("✅ GUARDADO OK:", nuevaClave, "->", equipoNombre);
       }
     } catch (err) {
-      console.error("Error en handleEleccion:", err);
+      console.error("❌ ERROR CONEXIÓN:", err);
     }
   };
 
@@ -345,17 +366,19 @@ const handleEleccion = async (partidoId, lado, equipoNombre) => {
           {/* LADO IZQUIERDO (Partidos 73-80) */}
           <div className="space-y-6">
             <h4 className="text-center text-[10px] font-black tracking-[0.4em] uppercase text-gray-500 mb-8 italic">{t.leftBracket || 'Bracket Izquierdo'}</h4>
-            {crucesR32.slice(0, 8).map((partido) => (
-              <PartidoCard key={partido.id} partido={partido} getNombreReal={getNombreReal} getFlag={getFlag} />
-            ))}
+          {crucesR32.slice(0, 8).map((partido) => (
+          <PartidoCard key={partido.id} partido={partido} getNombreReal={getNombreReal} getFlag={getFlag} isLockedFinal={isLockedFinal} />
+          ))}
+
           </div>
 
           {/* LADO DERECHO (Partidos 81-88) */}
           <div className="space-y-6">
             <h4 className="text-center text-[10px] font-black tracking-[0.4em] uppercase text-gray-500 mb-8 italic">{t.rightBracket || 'Bracket Derecho'}</h4>
-            {crucesR32.slice(8, 16).map((partido) => (
-              <PartidoCard key={partido.id} partido={partido} getNombreReal={getNombreReal} getFlag={getFlag} />
-            ))}
+          {crucesR32.slice(8, 16).map((partido) => (
+            <PartidoCard key={partido.id} partido={partido} getNombreReal={getNombreReal} getFlag={getFlag} isLockedFinal={isLockedFinal} />
+          ))}
+
           </div>
         </div>
 {/* SECCIÓN OCTAVOS DE FINAL (ROUND 16) */}
@@ -370,16 +393,17 @@ const handleEleccion = async (partidoId, lado, equipoNombre) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[89, 90, 91, 92, 93, 94, 95, 96].map(id => (
-            <PartidoSelectorCard 
-              key={id}
-              partidoId={id}
-              getOpciones={getOpcionesParaPartido}
-              apuestas={apuestas}
-              onSelect={handleEleccion}
-              getFlag={getFlag}
-              t={t}
-            />
-          ))}
+          <PartidoSelectorCard 
+            key={id}
+            partidoId={id}
+            getOpciones={getOpcionesParaPartido}
+            apuestas={apuestas}
+            onSelect={handleEleccion}
+            getFlag={getFlag}
+            t={t}
+            isLockedFinal={isLockedFinal} // <--- AÑADIR ESTO
+          />
+        ))}
         </div>
       </div>
 
@@ -397,17 +421,18 @@ const handleEleccion = async (partidoId, lado, equipoNombre) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Usamos los IDs que definiste: 97, 98, 99, 100 */}
-        {[97, 98, 99, 100].map(id => (
-          <PartidoSelectorCard 
-            key={id}
-            partidoId={id}
-            getOpciones={getOpcionesParaPartido}
-            apuestas={apuestas}
-            onSelect={handleEleccion}
-            getFlag={getFlag}
-            t={t}
-          />
-        ))}
+      {[97, 98, 99, 100].map(id => (
+      <PartidoSelectorCard 
+        key={id}
+        partidoId={id}
+        getOpciones={getOpcionesParaPartido}
+        apuestas={apuestas}
+        onSelect={handleEleccion}
+        getFlag={getFlag}
+        t={t}
+        isLockedFinal={isLockedFinal} // <--- AÑADIR ESTO
+      />
+    ))}
       </div>
     </div>
 
@@ -425,17 +450,18 @@ const handleEleccion = async (partidoId, lado, equipoNombre) => {
 
       {/* Centramos las semis en el grid para que visualmente se vea la progresión */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-4xl mx-auto">
-        {[101, 102].map(id => (
-          <PartidoSelectorCard 
-            key={id}
-            partidoId={id}
-            getOpciones={getOpcionesParaPartido}
-            apuestas={apuestas}
-            onSelect={handleEleccion}
-            getFlag={getFlag}
-            t={t}
-          />
-        ))}
+      {[101, 102].map(id => (
+        <PartidoSelectorCard 
+          key={id}
+          partidoId={id}
+          getOpciones={getOpcionesParaPartido}
+          apuestas={apuestas}
+          onSelect={handleEleccion}
+          getFlag={getFlag}
+          t={t}
+          isLockedFinal={isLockedFinal} // <--- AÑADIR ESTO
+        />
+      ))}
       </div>
     </div>
 
@@ -464,6 +490,7 @@ const handleEleccion = async (partidoId, lado, equipoNombre) => {
             onSelect={handleEleccion}
             getFlag={getFlag}
             t={t}
+            isLockedFinal={isLockedFinal}
           />
         </div>
 
@@ -479,6 +506,7 @@ const handleEleccion = async (partidoId, lado, equipoNombre) => {
             onSelect={handleEleccion}
             getFlag={getFlag}
             t={t}
+            isLockedFinal={isLockedFinal}
           />
         </div>
       </div>
@@ -499,7 +527,7 @@ const handleEleccion = async (partidoId, lado, equipoNombre) => {
         { label: t.podium_3, key: 'winner_3', partidoRef: 103, icon: '🥉', color: 'border-orange-700/30 text-orange-400' },
         { label: t.podium_4, key: 'winner_4', partidoRef: 103, icon: '🏅', color: 'border-white/10 text-gray-500' },
       ].map((pos) => {
-        // Obtenemos los dos equipos que el usuario puso en el partido 104 o 103
+        // Obtenemos los equipos finalistas/semifinalistas del mapa de apuestas
         const opciones = [
           apuestas[`${pos.partidoRef}_local`],
           apuestas[`${pos.partidoRef}_visitante`]
@@ -512,45 +540,78 @@ const handleEleccion = async (partidoId, lado, equipoNombre) => {
               <span className="text-[10px] font-black uppercase tracking-widest">{pos.label}</span>
             </div>
             
-            {/* AQUÍ ESTÁ EL SELECT CORREGIDO */}
-            <select
-              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm font-black uppercase tracking-wider text-white outline-none focus:border-yellow-500 transition-all appearance-none cursor-pointer"
-              value={apuestas[pos.key] || ""}
-              onChange={(e) => {
-                setApuestas(prev => ({
-                  ...prev,
-                  [pos.key]: e.target.value
-                }));
-              }}
-            >
-              <option value="" className="bg-[#0a0a0a]">{t.select || 'Seleccionar...'}</option>
-              {opciones.map(opt => (
-                <option key={opt} value={opt} className="bg-[#0a0a0a]">{opt}</option>
-              ))}
-            </select>
+          <select
+            disabled={isLockedFinal} 
+            className={`w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm font-black uppercase tracking-wider text-white outline-none transition-all appearance-none ${
+              isLockedFinal 
+                ? 'opacity-50 cursor-not-allowed' 
+                : 'focus:border-yellow-500 cursor-pointer'
+            }`}
+            value={apuestas[pos.key] || ""}
+            onChange={(e) => {
+              const valor = e.target.value;
+              setApuestas(prev => ({ ...prev, [pos.key]: valor }));
+              handleEleccion('podium', pos.key.replace('winner_', ''), valor);
+            }}
+          >
+            <option value="" className="bg-[#0a0a0a]">{t.select || 'Seleccionar...'}</option>
+            {opciones.map(opt => (
+              <option key={opt} value={opt} className="bg-[#0a0a0a]">{opt}</option>
+            ))}
+          </select>
+
           </div>
         );
       })}
     </div>
 
-    {/* BOTÓN DE CIERRE MAESTRO */}
+{/* BOTÓN DE CIERRE MAESTRO */}
     <div className="mt-16">
       <p className="text-[9px] text-gray-500 text-center uppercase font-bold mb-4 italic tracking-widest">
         Al confirmar, tu apuesta quedará bloqueada para el resto del Mundial
       </p>
       <button 
-        onClick={() => {
-          console.log("APUESTA TOTAL A ENVIAR:", apuestas);
-          alert("¡Apuesta guardada con éxito! Secciones bloqueadas.");
+        onClick={async () => {
+          if (session?.user?.email === 'demo@mundial.com') return alert("Modo DEMO");
+          
+          try {
+            // A. Guardado de seguridad de las apuestas actuales
+            const updates = Object.entries(apuestas).map(([key, value]) => ({
+              user_id: session.user.id,
+              match_id: String(key),
+              selected_team: value,
+              prediction_home: null,
+              prediction_away: null
+            }));
+
+            if (updates.length > 0) {
+              await supabase.from('predictions').upsert(updates, { onConflict: 'user_id,match_id' });
+            }
+
+            // B. ACTIVACIÓN DEL BLOQUEO en la tabla profiles
+            const { error: errorLock } = await supabase
+              .from('profiles')
+              .update({ is_locked: true })
+              .eq('id', session.user.id);
+
+            if (errorLock) throw errorLock;
+
+            alert("¡Apuesta cerrada y bloqueada con éxito! 🔒");
+            window.location.reload(); // Recargamos para que todo el sistema reconozca el bloqueo
+
+          } catch (err) {
+            console.error("Error en el cierre:", err);
+            alert("No se pudo cerrar la apuesta: " + err.message);
+          }
         }}
         className="w-full py-5 bg-yellow-500 hover:bg-yellow-400 text-black font-black uppercase italic tracking-[0.2em] rounded-2xl transition-all shadow-[0_10px_30px_rgba(234,179,8,0.2)] active:scale-95"
       >
         {t.confirmAll || 'Cerrar Apuesta Mundial 🔒'}
       </button>
     </div>
+
   </div>
 </div>
-
 
       </div>
 

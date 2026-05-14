@@ -8,23 +8,31 @@ export default function MatchesTab({
   extras, setExtras, ExtrasTab 
 }) {
 
-  const handleSaveMatches = async () => {
+const handleSaveMatches = async () => {
     if (session?.user?.email === 'demo@mundial.com') return alert("Modo DEMO");
     
     setLoading(true);
-    const updates = partidos.filter(m => m.group_stage === activePhase).map(m => ({
-      user_id: session.user.id, 
-      match_id: m.id,
-      prediction_home: parseInt(pronosticos[m.id]?.h) || 0,
-      prediction_away: parseInt(pronosticos[m.id]?.a) || 0
-    }));
+    // 1. Preparamos los datos asegurando que match_id sea String
+    const updates = partidos
+      .filter(m => m.group_stage === activePhase)
+      .map(m => ({
+        user_id: session.user.id, 
+        match_id: String(m.id), // Lo forzamos a String para que coincida con el tipo de la tabla
+        prediction_home: parseInt(pronosticos[m.id]?.h) || 0,
+        prediction_away: parseInt(pronosticos[m.id]?.a) || 0
+      }));
 
     try {
-      await supabase.from('predictions').upsert(updates);
+      // 2. Añadimos el onConflict para que el upsert sepa qué comparar
+      const { error } = await supabase
+        .from('predictions')
+        .upsert(updates, { onConflict: 'user_id,match_id' });
+
+      if (error) throw error;
       alert("Guardado ✓");
     } catch (err) {
-      console.error(err);
-      alert("Error al guardar");
+      console.error("Error en handleSaveMatches:", err);
+      alert("Error al guardar: " + err.message);
     } finally {
       setLoading(false);
     }

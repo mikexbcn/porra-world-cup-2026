@@ -92,27 +92,28 @@ async function fetchAllData(userId) {
       const pMap = {}; // Para los goles (Grupos)
       const aMap = {}; // Para los equipos (Cruces)
 
-      if (pr) {
+if (pr) {
         pr.forEach(x => { 
-          // 1. BLINDAJE PARA GOLES: Solo hacemos toString si el valor existe (no es null ni undefined)
+          const mId = x.match_id?.toString();
+          if (!mId) return; // Si no hay ID, ignoramos la fila
+
+          // 1. PROCESAR GOLES (Fase de Grupos)
+          // Verificamos si existen las columnas de goles antes de tocar nada
           if (x.prediction_home !== null && x.prediction_home !== undefined) {
-            pMap[x.match_id] = { 
+            pMap[mId] = { 
               h: x.prediction_home.toString(), 
-              // Aquí también blindamos el away por si acaso
-              a: (x.prediction_away !== null && x.prediction_away !== undefined) ? x.prediction_away.toString() : '' 
+              a: (x.prediction_away !== null && x.prediction_away !== undefined) ? x.prediction_away.toString() : '0' 
             };
           }
 
-          // 2. BLINDAJE PARA EQUIPOS (Bracket):
+          // 2. PROCESAR EQUIPOS (Bracket / Cruces)
+          // Esto es independiente de los goles. Si hay un equipo, se guarda.
           if (x.selected_team) {
-            // Usamos String() por si el ID del match viniera como número, para que no falle el mapa
-            const mId = x.match_id ? x.match_id.toString() : '';
-            if (mId) {
-              aMap[mId] = x.selected_team;
-            }
+            aMap[mId] = x.selected_team;
           }
         });
       }
+      
       setPronosticos(pMap);
       setApuestasBracket(aMap);
 
