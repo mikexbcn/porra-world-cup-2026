@@ -38,6 +38,9 @@ export default function Home() {
   const [activePhase, setActivePhase] = useState('GROUP A');
   const [extras, setExtras] = useState({ top_scorer: '', best_player: '', best_keeper: '', fair_play: '' });
 
+  const [usuarioBloqueado, setUsuarioBloqueado] = useState(false);
+  const [gruposBloqueados, setGruposBloqueados] = useState({});
+
   const t = translations[lang];
 
 useEffect(() => {
@@ -79,9 +82,28 @@ async function fetchAllData(userId) {
     setExtras({ top_scorer: '', best_player: '', best_keeper: '', fair_play: '' });
 
     try {
-      // Perfil
-      const { data: p } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
-      setPerfil(p);
+
+    // Perfil
+    const { data: p } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+    if (p) {
+      setUsuarioBloqueado(p.is_locked);
+      // GUARDAMOS EL CANDADO DE CADA GRUPO
+      setGruposBloqueados({
+        'GROUP A': p.group_a_locked,
+        'GROUP B': p.group_b_locked,
+        'GROUP C': p.group_c_locked,
+        'GROUP D': p.group_d_locked,
+        'GROUP E': p.group_e_locked,
+        'GROUP F': p.group_f_locked,
+        'GROUP G': p.group_g_locked,
+        'GROUP H': p.group_h_locked,
+        'GROUP I': p.group_i_locked,
+        'GROUP J': p.group_j_locked,
+        'GROUP K': p.group_k_locked,
+        'GROUP L': p.group_l_locked,
+      });
+    }
+    setPerfil(p);
 
       // Partidos
       const { data: m } = await supabase.from('matches').select('*').order('match_date', { ascending: true });
@@ -208,6 +230,7 @@ return (
       extras={extras}
       setExtras={setExtras}
       ExtrasTab={ExtrasTab}
+      gruposBloqueados={gruposBloqueados}
     />
   </div>
 )}
@@ -223,7 +246,8 @@ return (
       getFlag={getFlag} 
       session={session} 
       t={t}
-      apuestasGuardadas={apuestasBracket} // <--- PASAMOS LA BOLSA CON LOS DATOS
+      apuestasGuardadas={apuestasBracket}  // <--- PASAMOS LA BOLSA CON LOS DATOS
+      isLockedProfile={usuarioBloqueado}
     />
   </div>
 )}

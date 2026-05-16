@@ -5,13 +5,18 @@ export default function MatchesTab({
   t, partidos, pronosticos, setPronosticos, tablas, setTablas,
   activePhase, setActivePhase, getFlag, recalcularClasificacion, 
   session, setLoading,
-  extras, setExtras, ExtrasTab 
+  extras, setExtras, ExtrasTab, gruposBloqueados
 }) {
 
+// Comprobamos si el grupo actual está bloqueado en la base de datos
+const isGroupLocked = gruposBloqueados && gruposBloqueados[activePhase] === true;
+  
 const handleSaveMatches = async () => {
     if (session?.user?.email === 'demo@mundial.com') return alert("Modo DEMO");
+    if (isGroupLocked) return alert("Este grupo ya está cerrado y no se puede modificar."); // <--- AÑADIDO AQUÍ
     
     setLoading(true);
+
     // 1. Preparamos los datos asegurando que match_id sea String
     const updates = partidos
       .filter(m => m.group_stage === activePhase)
@@ -125,6 +130,7 @@ const handleSaveMatches = async () => {
                       <input 
                         type="number" 
                         min="0"
+                        disabled={isGroupLocked}
                         value={pronosticos[match.id]?.h || ''} 
                         onChange={(e) => {
                           if (parseInt(e.target.value) < 0) return; // Bloqueo de negativos
@@ -139,6 +145,7 @@ const handleSaveMatches = async () => {
                       <input 
                         type="number" 
                         min="0"
+                        disabled={isGroupLocked}
                         value={pronosticos[match.id]?.a || ''} 
                         onChange={(e) => {
                           if (parseInt(e.target.value) < 0) return; // Bloqueo de negativos
@@ -157,12 +164,69 @@ const handleSaveMatches = async () => {
                   </div>
                 </div>
               ))}
-              <button 
-                onClick={handleSaveMatches}
-                className={`w-full py-6 font-black uppercase rounded-[25px] text-xs mt-4 mb-10 ${session?.user?.email === 'demo@mundial.com' ? 'bg-gray-800 text-gray-500' : 'bg-yellow-500 text-black shadow-lg'}`}
-              >
-                {session?.user?.email === 'demo@mundial.com' ? '🔒 MODO LECTURA' : `CONFIRMAR ${activePhase}`}
-              </button>
+
+        <button 
+          disabled={isGroupLocked}
+          onClick={async () => {
+            if (session?.user?.email === 'demo@mundial.com') return alert("Modo DEMO");
+
+            // 1. Pregunta de seguridad antes de cerrar el grupo
+            const seguro = window.confirm(`¿Estás completamente seguro de cerrar el ${activePhase}? Una vez confirmado, no podrás realizar más cambios en estos partidos.`);
+            if (!seguro) return;
+
+            try {
+              setLoading(true);
+
+              // A. Primero guardamos los últimos goles por seguridad
+              const updates = partidos
+                .filter(m => m.group_stage === activePhase)
+                .map(m => ({
+                  user_id: session.user.id, 
+                  match_id: String(m.id),
+                  prediction_home: parseInt(pronosticos[m.id]?.h) || 0,
+                  prediction_away: parseInt(pronosticos[m.id]?.a) || 0
+                }));
+
+              if (updates.length > 0) {
+                await supabase.from('predictions').upsert(updates, { onConflict: 'user_id,match_id' });
+              }
+
+              // B. Calculamos el nombre exacto de la columna de la base de datos (Ej: 'group_a_locked')
+              const columnaCol = `${activePhase.toLowerCase().replace(' ', '_')}_locked`;
+
+              // C. Bloqueamos el grupo definitivo en la tabla profiles
+              const { error: errorLock } = await supabase
+                .from('profiles')
+                .update({ [columnaCol]: true })
+                .eq('id', session.user.id);
+
+              if (errorLock) throw errorLock;
+
+              alert(`¡${activePhase} cerrado y bloqueado con éxito! 🔒`);
+              window.location.reload(); // Recarga para congelar los campos
+
+            } catch (err) {
+              console.error("Error al cerrar el grupo:", err);
+              alert("No se pudo cerrar el grupo: " + err.message);
+            } finally {
+              setLoading(false);
+            }
+          }}
+          className={`w-full py-6 font-black uppercase rounded-[25px] text-xs mt-4 mb-10 transition-all ${
+            isGroupLocked 
+              ? 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-60' 
+              : session?.user?.email === 'demo@mundial.com' 
+                ? 'bg-gray-800 text-gray-500' 
+                : 'bg-yellow-500 text-black shadow-lg active:scale-95 hover:bg-yellow-400'
+          }`}
+        >
+          {isGroupLocked 
+            ? `🔒 ${activePhase} CERRADO` 
+            : session?.user?.email === 'demo@mundial.com' 
+              ? '🔒 MODO LECTURA' 
+              : `CONFIRMAR Y CERRAR ${activePhase} 🔒`}
+        </button>
+
             </>
           )}
         </div>

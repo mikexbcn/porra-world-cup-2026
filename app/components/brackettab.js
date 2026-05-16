@@ -179,12 +179,15 @@ const PartidoSelectorCard = ({ partidoId, getOpciones, apuestas, onSelect, getFl
   );
 };
 
-export default function BracketTab({ tablas, getFlag, session, t, apuestasGuardadas }) {
+export default function BracketTab({ tablas, getFlag, session, t, apuestasGuardadas, isLockedProfile }) {
   // Solo esta línea. Sin "React.", sin "useState" y sin duplicados.
-  const isLockedFinal = Array.isArray(apuestasGuardadas) 
-    ? apuestasGuardadas.some(a => a.match_id === 'config_lock') 
-    : false;
-
+  
+  // El candado definitivo que viene desde el componente Padre
+  const isLockedFinal = isLockedProfile === true;
+  
+  // AÑADE ESTA LÍNEA DE CONTROL AQUÍ:
+  console.log("¿ESTÁ BLOQUEADO REALMENTE?:", isLockedFinal, "DATOS RECIBIDOS:", apuestasGuardadas);
+  
   // 1. ESTADO DE LAS APUESTAS
   const [apuestas, setApuestas] = useState({});
   // Este efecto "escucha" cuando llegan los datos de la base de datos y los pone en el cuadro
@@ -217,8 +220,7 @@ const handleEleccion = async (partidoId, lado, equipoNombre) => {
     if (isLockedFinal) return; 
     
     const nuevaClave = `${partidoId}_${lado}`;
-    
-    // 2. Si el código llega aquí, es que NO está bloqueado y puede cambiar la web
+        // 2. Si el código llega aquí, es que NO está bloqueado y puede cambiar la web
     setApuestas(prev => ({ ...prev, [nuevaClave]: equipoNombre }));
 
     try {
@@ -549,6 +551,7 @@ const handleEleccion = async (partidoId, lado, equipoNombre) => {
             }`}
             value={apuestas[pos.key] || ""}
             onChange={(e) => {
+              if (isLockedFinal) return;
               const valor = e.target.value;
               setApuestas(prev => ({ ...prev, [pos.key]: valor }));
               handleEleccion('podium', pos.key.replace('winner_', ''), valor);
@@ -571,11 +574,13 @@ const handleEleccion = async (partidoId, lado, equipoNombre) => {
         Al confirmar, tu apuesta quedará bloqueada para el resto del Mundial
       </p>
       <button 
-        onClick={async () => {
-          if (session?.user?.email === 'demo@mundial.com') return alert("Modo DEMO");
+                onClick={async () => {
+          // 1. PREGUNTA DE SEGURIDAD ANTES DE BLOQUEAR
+          const seguro = window.confirm("¿Estás completamente seguro de cerrar tu apuesta? Una vez confirmada, no podrás realizar más cambios.");
+          if (!seguro) return; // Si dice que no, nos paramos aquí.
           
           try {
-            // A. Guardado de seguridad de las apuestas actuales
+            // A. Guardado de seguridad de las apuestas actuales antes de cerrar
             const updates = Object.entries(apuestas).map(([key, value]) => ({
               user_id: session.user.id,
               match_id: String(key),
@@ -588,7 +593,7 @@ const handleEleccion = async (partidoId, lado, equipoNombre) => {
               await supabase.from('predictions').upsert(updates, { onConflict: 'user_id,match_id' });
             }
 
-            // B. ACTIVACIÓN DEL BLOQUEO en la tabla profiles
+            // B. ACTIVACIÓN DEL BLOQUEO DEFINITIVO EN PROFILES
             const { error: errorLock } = await supabase
               .from('profiles')
               .update({ is_locked: true })
@@ -597,7 +602,7 @@ const handleEleccion = async (partidoId, lado, equipoNombre) => {
             if (errorLock) throw errorLock;
 
             alert("¡Apuesta cerrada y bloqueada con éxito! 🔒");
-            window.location.reload(); // Recargamos para que todo el sistema reconozca el bloqueo
+            window.location.reload(); // Recarga para congelar toda la interfaz
 
           } catch (err) {
             console.error("Error en el cierre:", err);
