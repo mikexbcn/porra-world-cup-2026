@@ -5,7 +5,8 @@ export default function MatchesTab({
   t, partidos, pronosticos, setPronosticos, tablas, setTablas,
   activePhase, setActivePhase, getFlag, recalcularClasificacion, 
   session, setLoading,
-  extras, setExtras, ExtrasTab, gruposBloqueados
+  extras, setExtras, ExtrasTab, gruposBloqueados, setGruposBloqueados,
+  jugadores
 }) {
 
 // Comprobamos si el grupo actual está bloqueado en la base de datos
@@ -94,13 +95,22 @@ const handleSaveMatches = async () => {
             {['SEMI-FINAL', 'FINAL'].map(g => (
               <button key={g} onClick={() => setActivePhase(g)} className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border ${activePhase === g ? 'bg-yellow-500 text-black border-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)]' : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'}`}>{g}</button>
             ))}
-            {/* NUEVO BOTÓN DE EXTRAS */}
+
+          {/* NUEVO BOTÓN DE EXTRAS */}
             <button 
               onClick={() => setActivePhase('EXTRAS')} 
-              className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border ${activePhase === 'EXTRAS' ? 'bg-purple-600 text-white border-purple-600 shadow-[0_0_10px_rgba(147,51,234,0.4)]' : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'}`}
+              className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border flex items-center justify-center gap-1.5 ${
+                activePhase === 'EXTRAS' 
+                  ? 'bg-purple-600 text-white border-purple-600 shadow-[0_0_10px_rgba(147,51,234,0.4)]' 
+                  : gruposBloqueados['extras']
+                    ? 'bg-red-950/20 text-red-400/70 border-red-500/20 font-bold'
+                    : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'
+              }`}
             >
-              ★ EXTRAS
+              {gruposBloqueados['extras'] && activePhase !== 'EXTRAS' && <span className="text-[10px]">🔒</span>}
+              {activePhase === 'EXTRAS' ? '★ EXTRAS' : gruposBloqueados['extras'] ? 'EXTRAS' : '★ EXTRAS'}
             </button>
+
           </div>    
         </div>
       </div>
@@ -231,12 +241,18 @@ const handleSaveMatches = async () => {
                 .update({ [columnaCol]: true })
                 .eq('id', session.user.id);
 
-              if (errorLock) throw errorLock;
+            if (errorLock) throw errorLock;
+
+              // ACTUALIZACIÓN EN CALIENTE: Actualiza el estado del candado al vuelo
+              setGruposBloqueados(prev => ({
+                ...prev,
+                [activePhase]: true
+              }));
 
               alert(`¡${activePhase} cerrado y bloqueado con éxito! 🔒`);
-              window.location.reload(); // Recarga para congelar los campos
 
             } catch (err) {
+
               console.error("Error al cerrar el grupo:", err);
               alert("No se pudo cerrar el grupo: " + err.message);
             } finally {
@@ -262,13 +278,17 @@ const handleSaveMatches = async () => {
           )}
         </div>
       ) : (
+
         <div className="animate-fade-in pb-20">
+          {/* Ponemos el log aquí dentro para inspeccionar el valor real al vuelo */}
+          {console.log("=== JUGADORES EN MATCHESTAB ===", jugadores)}
           <ExtrasTab 
             t={t} 
             extras={extras} 
             setExtras={setExtras} 
             session={session} 
             setLoading={setLoading} 
+            jugadores={jugadores}
           />
         </div>
       )}

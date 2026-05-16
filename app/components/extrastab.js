@@ -1,9 +1,28 @@
 // components/extrastab.js
+import { useState, useEffect } from 'react'
 import { supabase } from '../../supabaseClient'
 
-export default function ExtrasTab({ t, extras, setExtras, session, setLoading }) {
+export default function ExtrasTab({ t, extras, setExtras, session, setLoading, jugadores = [], setGruposBloqueados }) {
+
+  console.log("=== JUGADORES EN EXTRAS ===", jugadores);
+
+// Copia y pega este bloque justo debajo del console.log:
+  const [extrasIniciales, setExtrasIniciales] = useState({});
+
+  useEffect(() => {
+    if (extras && Object.keys(extrasIniciales).length === 0) {
+      setExtrasIniciales(extras);
+    }
+  }, [extras]);
+
+  const sinCambios = 
+    (extras.top_scorer || '') === (extrasIniciales.top_scorer || '') &&
+    (extras.best_player || '') === (extrasIniciales.best_player || '') &&
+    (extras.best_keeper || '') === (extrasIniciales.best_keeper || '') &&
+    (extras.best_young || '') === (extrasIniciales.best_young || '') &&
+    (extras.fair_play || '') === (extrasIniciales.fair_play || '');
   
-const handleSaveExtras = async () => {
+  const handleSaveExtras = async () => {
     if (session?.user?.email === 'demo@mundial.com') return alert("Modo DEMO");
     setLoading(true);
     try {
@@ -19,11 +38,41 @@ const handleSaveExtras = async () => {
             fair_play: extras.fair_play,
             champion: extras.champion,
           },
-          { onConflict: 'user_id' } // <--- ESTO ES LO QUE FALTA
+          { onConflict: 'user_id' }
         );
 
-      if (error) throw error;
+if (error) throw error;
+
+      // 1. OBTENEMOS EL ID DEL USUARIO DIRECTO DESDE LA SESIÓN ACTIVA DE SUPABASE
+      const { data: { session: activeSession } } = await supabase.auth.getSession();
+      const userId = activeSession?.user?.id;
+
+      if (userId) {
+        // 2. FORZAMOS EL UPDATE A LA COLUMNA DE PROFILES
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ extra_predictions_locked: true })
+          .eq('id', userId);
+
+        if (profileError) {
+          console.error("=== ERROR REAL DE SUPABASE INYECTANDO TRUE ===", profileError);
+          alert("Error de Supabase: " + profileError.message);
+        }
+      } else {
+        console.error("=== NO SE ENCONTRÓ USER ID EN LA SESIÓN ===");
+      }
+
+      // Actualizamos el estado inicial interno para congelar el botón de abajo
+      setExtrasIniciales(extras);
+
+      // Avisamos al menú de arriba en vivo
+      if (setGruposBloqueados) {
+        setGruposBloqueados(prev => ({ ...prev, 'extras': true }));
+      }
+
       alert("¡Premios extra guardados!");
+
+
     } catch (err) {
       console.error("Error guardando extras:", err);
       alert("Error al guardar: " + err.message);
@@ -32,15 +81,19 @@ const handleSaveExtras = async () => {
     }
   };
 
-  // IDs corregidos para que coincidan con las columnas de tu DB
+  // Listas filtradas dinámicamente
+  const soloPorteros = jugadores.filter(j => j.position === 'GK');
+  
+  // Extraemos las selecciones únicas para el Fair Play
+  const listaSelecciones = Array.from(new Set(jugadores.map(j => j.team))).sort();
+
+  // IDs con su respectivo ID de datalist asignado
   const premios = [
-    { id: 'best_player', label: t.extra_mvp },
-    { id: 'top_scorer', label: t.extra_pichichi },
-    { id: 'best_keeper', label: t.extra_gk },
-    { id: 'best_young', label: t.extra_young },
-    { id: 'fair_play', label: t.extra_fairplay },
-    // Si quieres que el usuario edite "champion" aquí, añádelo:
-    // { id: 'champion', label: 'Campeón' } 
+    { id: 'best_player', label: t.extra_mvp, listId: 'list-todos' },
+    { id: 'top_scorer', label: t.extra_pichichi, listId: 'list-todos' },
+    { id: 'best_keeper', label: t.extra_gk, listId: 'list-porteros' },
+    { id: 'best_young', label: t.extra_young, listId: 'list-todos' },
+    { id: 'fair_play', label: t.extra_fairplay, listId: 'list-selecciones' },
   ];
 
   return (
@@ -58,26 +111,64 @@ const handleSaveExtras = async () => {
               </label>
               <input
                 type="text"
+                list={p.listId} // Enlazamos el input con su respectivo datalist abajo
                 value={extras[p.id] || ''}
                 onChange={(e) => setExtras({ ...extras, [p.id]: e.target.value.toUpperCase() })}
-                placeholder="..."
+                placeholder={t.placeholder_extras || "Escribe para buscar..."}
                 className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white font-black uppercase focus:border-yellow-500 outline-none transition-all"
               />
             </div>
           ))}
         </div>
 
+        {/* --- FUENTES DE DATOS PARA EL AUTOCOMPLETADO (DATALISTS) --- */}
+        
+        {/* 1. Lista de todos los jugadores */}
+        <datalist id="list-todos">
+          {jugadores.map((j) => (
+            <option key={j.id} value={`${j.name} (${j.team})`} />
+          ))}
+        </datalist>
+
+        {/* 2. Lista exclusiva de porteros */}
+        <datalist id="list-porteros">
+          {soloPorteros.map((j) => (
+            <option key={j.id} value={`${j.name} (${j.team})`} />
+          ))}
+        </datalist>
+
+        {/* 3. Lista de selecciones nacionales únicos */}
+        <datalist id="list-selecciones">
+          {listaSelecciones.map((team) => (
+            <option key={team} value={team} />
+          ))}
+        </datalist>
+
+        {/* --- FIN DATALISTS --- */}
+
+        {/* BOTÓN CON EL MISMO DISEÑO DE BLOQUEO QUE LOS GRUPOS */}
         <button
           onClick={handleSaveExtras}
-          disabled={session?.user?.email === 'demo@mundial.com'}
-          className={`w-full py-5 font-black uppercase rounded-2xl text-xs mt-10 transition-all ${
+          disabled={session?.user?.email === 'demo@mundial.com' || sinCambios}
+          className={`w-full py-5 font-black uppercase rounded-2xl text-xs mt-10 transition-all flex items-center justify-center gap-2 tracking-widest ${
             session?.user?.email === 'demo@mundial.com' 
-            ? 'bg-gray-800 text-gray-500 cursor-not-allowed' 
-            : 'bg-yellow-500 text-black shadow-[0_10px_20px_rgba(234,179,8,0.2)] hover:scale-[1.02] active:scale-95'
+              ? 'bg-gray-800 text-gray-500 cursor-not-allowed' 
+              : sinCambios
+                ? 'bg-white/5 text-gray-400 border border-white/10 cursor-not-allowed shadow-none' 
+                : 'bg-yellow-500 text-black shadow-[0_10px_20px_rgba(234,179,8,0.2)] hover:scale-[1.02] active:scale-95'
           }`}
         >
-          {session?.user?.email === 'demo@mundial.com' ? '🔒 MODO LECTURA' : 'GUARDAR PREMIOS EXTRAS'}
+          {session?.user?.email === 'demo@mundial.com' ? (
+            <>🔒 MODO LECTURA</>
+          ) : sinCambios ? (
+            <>
+              <span className="text-sm">🔒</span> {t.nav_extras_saved || 'PRONÓSTICOS GUARDADOS'}
+            </>
+          ) : (
+            'GUARDAR PREMIOS EXTRAS'
+          )}
         </button>
+
       </div>
     </div>
   );

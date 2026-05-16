@@ -37,6 +37,7 @@ export default function Home() {
   const [perfil, setPerfil] = useState(null);
   const [activePhase, setActivePhase] = useState('GROUP A');
   const [extras, setExtras] = useState({ top_scorer: '', best_player: '', best_keeper: '', fair_play: '' });
+  const [jugadores, setJugadores] = useState([]);
 
   const [usuarioBloqueado, setUsuarioBloqueado] = useState(false);
   const [gruposBloqueados, setGruposBloqueados] = useState({});
@@ -110,6 +111,7 @@ async function fetchAllData(userId) {
         'GROUP J': p.group_j_locked,
         'GROUP K': p.group_k_locked,
         'GROUP L': p.group_l_locked,
+        'extras': p.extra_predictions_locked,
       });
     }
     setPerfil(p);
@@ -155,6 +157,19 @@ if (pr) {
       } else {
         setExtras({ top_scorer: '', best_player: '', best_keeper: '', fair_play: '' });
       }
+
+      // --- NUEVO: DESCARGAR JUGADORES DE LA FIFA (CORREGIDO) ---
+      const { data: pl, error: errorJugadores } = await supabase
+        .from('players')
+        .select('*')
+        .order('name', { ascending: true });
+      
+      // Log limpio para ver qué nos devuelve Supabase sin romper el hilo
+      console.log("=== DATA SUPABASE ===", pl);
+      if (errorJugadores) console.error("=== ERROR SUPABASE JUGADORES ===", errorJugadores);
+      
+      setJugadores(pl || []);
+      // ---------------------------------------------  
 
       if (m) recalcularClasificacion(m, pMap, setTablas);
     } catch (e) { 
@@ -240,6 +255,8 @@ return (
       setExtras={setExtras}
       ExtrasTab={ExtrasTab}
       gruposBloqueados={gruposBloqueados}
+      setGruposBloqueados={setGruposBloqueados}
+      jugadores={jugadores}
     />
   </div>
 )}
