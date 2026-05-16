@@ -43,6 +43,15 @@ export default function Home() {
 
   const t = translations[lang];
 
+  // Comprobamos si los 12 grupos de la fase de grupos están cerrados
+  const todosLosGruposCerrados = 
+    gruposBloqueados['GROUP A'] && gruposBloqueados['GROUP B'] && 
+    gruposBloqueados['GROUP C'] && gruposBloqueados['GROUP D'] && 
+    gruposBloqueados['GROUP E'] && gruposBloqueados['GROUP F'] && 
+    gruposBloqueados['GROUP G'] && gruposBloqueados['GROUP H'] && 
+    gruposBloqueados['GROUP I'] && gruposBloqueados['GROUP J'] && 
+    gruposBloqueados['GROUP K'] && gruposBloqueados['GROUP L'];
+
 useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -238,20 +247,33 @@ return (
 {/* --- SECCIÓN DE APUESTAS (CUADRO MAESTRO) --- */}
 {tab === 'bets' && (
   <div className="animate-fade-in relative z-10">
-    <h2 className="text-xl font-black text-yellow-500 uppercase mb-8 text-center italic tracking-widest">
-      {t.bracketMainTitle || 'Cuadro Eliminatorio'}
-    </h2>
-    <BracketTab 
-      tablas={tablas} 
-      getFlag={getFlag} 
-      session={session} 
-      t={t}
-      apuestasGuardadas={apuestasBracket}  // <--- PASAMOS LA BOLSA CON LOS DATOS
-      isLockedProfile={usuarioBloqueado}
-    />
+    {!todosLosGruposCerrados ? (
+      <div className="bg-black/60 backdrop-blur-md border border-red-500/30 rounded-3xl p-10 text-center max-w-xl mx-auto my-12 shadow-[0_0_30px_rgba(239,68,68,0.1)]">
+        <span className="text-5xl block mb-4">🔒</span>
+        <h3 className="text-lg font-black text-red-500 uppercase tracking-wider mb-2">
+          {t.bracketLockedTitle}
+        </h3>
+        <p className="text-xs text-gray-400 leading-relaxed font-medium">
+          {t.bracketLockedDesc}
+        </p>
+      </div>
+    ) : (
+      <>
+        <h2 className="text-xl font-black text-yellow-500 uppercase mb-8 text-center italic tracking-widest">
+          {t.bracketMainTitle || 'Cuadro Eliminatorio'}
+        </h2>
+        <BracketTab 
+          tablas={tablas} 
+          getFlag={getFlag} 
+          session={session} 
+          t={t}
+          apuestasGuardadas={apuestasBracket}
+          isLockedProfile={usuarioBloqueado}
+        />
+      </>
+    )}
   </div>
 )}
-
 
      </div> {/* Cierra max-w-4xl */}
      </div> {/* Cierra el segundo relative z-10 */}

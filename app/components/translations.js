@@ -40,7 +40,9 @@ export const translations = {
     quarterFinals: "Cuartos de Final",
     semiFinals: "Semifinales",
     finalTitle: "Gran Final", thirdPlaceTitle: "Tercer Puesto", confirmAll: "Cerrar Apuesta Mundial 🔒", podium_1: "Campeón", podium_2: "Subcampeón", podium_3: "Tercero", podium_4: "Cuarto",
-    podium_title: "PÓDIUM FINAL", 
+    podium_title: "PÓDIUM FINAL",
+    bracketLockedTitle: "Sección Bloqueada",
+    bracketLockedDesc: "Para poder diseñar y rellenar tu Cuadro Eliminatorio, primero debes completar y confirmar los 12 grupos (del Grupo A al L) en la sección de pronósticos.",    
   },
   ca: { 
     title: "MUNDIAL", predictions: "Partits", honor: "Premis", logout: "Sortir", save: "Confirmar 🔒", saveExtras: "Guardar 🏆", vip: "INTRODUEIX EL TEU TOKEN", loginBtn: "Entrar", signupBtn: "Crear Compte", email: "Correu", pass: "Contrasenya", user: "Usuari", welcome: "Hola!", already: "Ja tens compte?", useToken: "Tinc un Token", ranking: "Rànquing", tableTitle: "Posicions", validate: "Validar Token", loginLink: "Entrar", backToken: "Tornar al Token", loading: "CARREGANT...",
@@ -83,6 +85,8 @@ export const translations = {
     quarterFinals: "Quarts de Final",
     semiFinals: "Semifinals", finalTitle: "Gran Final", thirdPlaceTitle: "Tercer Lloc", confirmAll: "Tancar Aposta Mundial 🔒", podium_1: "Campió", podium_2: "Subcampió", podium_3: "Tercer", podium_4: "Quart",
     podium_title: "PÒDIUM FINAL",
+    bracketLockedTitle: "Secció bloquejada",
+    bracketLockedDesc: "Per a poder dissenyar i omplir el teu quadre eliminatori, primer has de completar i confirmar els 12 grups (del Grup A a L) a la secció de pronòstics.",
   },
   en: { 
     title: "WORLD CUP", predictions: "Matches", honor: "Prizes", logout: "Logout", save: "Confirm 🔒", saveExtras: "Save 🏆", vip: "ENTER YOUR TOKEN", loginBtn: "Login", signupBtn: "Sign Up", email: "Email", pass: "Password", user: "Username", welcome: "Hi!", already: "Have an account?", useToken: "Use Token", ranking: "Ranking", tableTitle: "Standings", validate: "Validate Token", loginLink: "Login", backToken: "Back to Token", loading: "LOADING...",
@@ -124,6 +128,8 @@ export const translations = {
     bracketMainTitle: "KNOCKOUT BRACKET",
     quarterFinals: "Quarter-Finals",
     semiFinals: "Semi-Finals",finalTitle: "Grand Final", thirdPlaceTitle: "Third Place Play-off", confirmAll: "Lock World Cup Bets 🔒", podium_1: "Champion", podium_2: "Runner-up", podium_3: "Third Place", podium_4: "Fourth Place",
-    podium_title: "FINAL PODIUM"
+    podium_title: "FINAL PODIUM",
+    bracketLockedTitle: "Section Locked",
+    bracketLockedDesc: "To design and complete your Knockout Bracket, you must first complete and confirm all 12 groups (Group A to L) in the matches section.",
   }
 };

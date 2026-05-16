@@ -45,33 +45,64 @@ const handleSaveMatches = async () => {
 
   return (
     <div className="animate-fade-in">
-      {/* SELECTOR DE FASES */}
+
+{/* SELECTOR DE FASES */}
       <div className="bg-black/40 backdrop-blur-md p-4 rounded-3xl border border-white/10 mb-8 sticky top-[130px] z-20">
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap justify-center gap-2">
-            {['GROUP A', 'GROUP B', 'GROUP C', 'GROUP D', 'GROUP E', 'GROUP F', 'GROUP G', 'GROUP H'].map(g => (
-              <button key={g} onClick={() => setActivePhase(g)} className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border ${activePhase === g ? 'bg-yellow-500 text-black border-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)]' : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'}`}>{g}</button>
-            ))}
+            {['GROUP A', 'GROUP B', 'GROUP C', 'GROUP D', 'GROUP E', 'GROUP F', 'GROUP G', 'GROUP H'].map(g => {
+              const isLocked = gruposBloqueados && gruposBloqueados[g] === true;
+              return (
+                <button 
+                  key={g} 
+                  onClick={() => setActivePhase(g)} 
+                  className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border ${
+                    activePhase === g 
+                      ? 'bg-yellow-500 text-black border-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)]' 
+                      : isLocked
+                        ? 'bg-red-950/30 text-red-400/60 border-red-900/40 hover:border-red-800/60' 
+                        : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'
+                  }`}
+                >
+                  {isLocked ? `🔒 ${g}` : g}
+                </button>
+              );
+            })}
           </div>
           <div className="flex flex-wrap justify-center gap-2">
-            {['GROUP I', 'GROUP J', 'GROUP K', 'GROUP L', 'ROUND 32', 'ROUND 16', 'QUARTER-FINAL'].map(g => (
-              <button key={g} onClick={() => setActivePhase(g)} className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border ${activePhase === g ? 'bg-yellow-500 text-black border-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)]' : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'}`}>{g}</button>
-            ))}
+            {['GROUP I', 'GROUP J', 'GROUP K', 'GROUP L', 'ROUND 32', 'ROUND 16', 'QUARTER-FINAL'].map(g => {
+              const isLocked = gruposBloqueados && gruposBloqueados[g] === true;
+              return (
+                <button 
+                  key={g} 
+                  onClick={() => setActivePhase(g)} 
+                  className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border ${
+                    activePhase === g 
+                      ? 'bg-yellow-500 text-black border-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)]' 
+                      : isLocked
+                        ? 'bg-red-950/30 text-red-400/60 border-red-900/40 hover:border-red-800/60' 
+                        : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'
+                  }`}
+                >
+                  {isLocked ? `🔒 ${g}` : g}
+                </button>
+              );
+            })}
           </div>
           
-    <div className="flex flex-wrap justify-center gap-2">
-        {['SEMI-FINAL', 'FINAL'].map(g => (
-        <button key={g} onClick={() => setActivePhase(g)} className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border ${activePhase === g ? 'bg-yellow-500 text-black border-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)]' : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'}`}>{g}</button>
-        ))}
-        {/* NUEVO BOTÓN DE EXTRAS */}
-        <button 
-            onClick={() => setActivePhase('EXTRAS')} 
-            className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border ${activePhase === 'EXTRAS' ? 'bg-purple-600 text-white border-purple-600 shadow-[0_0_10px_rgba(147,51,234,0.4)]' : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'}`}
-        >
-            ★ EXTRAS
-        </button>
-        </div>    
-       </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            {['SEMI-FINAL', 'FINAL'].map(g => (
+              <button key={g} onClick={() => setActivePhase(g)} className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border ${activePhase === g ? 'bg-yellow-500 text-black border-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)]' : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'}`}>{g}</button>
+            ))}
+            {/* NUEVO BOTÓN DE EXTRAS */}
+            <button 
+              onClick={() => setActivePhase('EXTRAS')} 
+              className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border ${activePhase === 'EXTRAS' ? 'bg-purple-600 text-white border-purple-600 shadow-[0_0_10px_rgba(147,51,234,0.4)]' : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'}`}
+            >
+              ★ EXTRAS
+            </button>
+          </div>    
+        </div>
       </div>
 
       {/* TABLA DE POSICIONES */}
