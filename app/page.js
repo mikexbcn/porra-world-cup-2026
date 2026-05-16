@@ -12,6 +12,9 @@ import AuthScreen from './components/authscreen'
 import { validarToken } from './components/authLogic';
 import { handleRegister, handleLogin, fetchAllData } from './libs/actions';
 import BracketTab from './components/brackettab';
+import AdminTab from './components/admintab';
+import RankingTab from './components/rankingtab';
+import ResultsTab from './components/resultstab';
 // --- FINAL DE CABECERA page.js ---
 
 
@@ -231,6 +234,22 @@ return (
       {/* AQUÍ ES DONDE DEBES PONER EL NAVBAR AHORA */}
       <Navbar t={t} tab={tab} setTab={setTab} />
 
+      {/* BOTÓN FLOTANTE EXCLUSIVO PARA EL ADMIN */}
+      {session?.user?.email === 'mikemulderx@gmail.com' && (
+        <div className="max-w-4xl mx-auto px-4 mt-4 flex justify-end">
+          <button
+            onClick={() => setTab('admin')}
+            className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md flex items-center gap-2 ${
+              tab === 'admin' 
+                ? 'bg-red-600 text-white border border-red-500 scale-105' 
+                : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'
+            }`}
+          >
+            ⚙️ PANEL ADMIN
+          </button>
+        </div>
+      )}
+
       <div className="max-w-4xl mx-auto p-4 pb-32">
 
 {tab === 'rules' && <RulesTab t={t} perfil={perfil} />}
@@ -291,6 +310,35 @@ return (
     )}
   </div>
 )}
+
+      {/* --- SECCIÓN DE RANKING GENERAL --- */}
+      {tab === 'ranking' && (
+        <RankingTab 
+          partidos={partidos} 
+          t={t} 
+        />
+      )}
+
+      {/* --- SECCIÓN DE RESULTADOS OFICIALES Y COMPARACIÓN --- */}
+      {tab === 'results' && (
+        <ResultsTab 
+          partidos={partidos}
+          pronosticos={pronosticos}
+          t={t}
+          getFlag={getFlag}
+        />
+      )}
+
+      {/* --- SECCIÓN DE ADMINISTRADOR PROTÉGIDA --- */}
+      {tab === 'admin' && session?.user?.email === 'mikemulderx@gmail.com' && (
+        <AdminTab 
+          session={session}
+          partidos={partidos}
+          setPartidos={setPartidos}
+          t={t}
+          getFlag={getFlag}
+        />
+      )}
 
      </div> {/* Cierra max-w-4xl */}
      </div> {/* Cierra el segundo relative z-10 */}
