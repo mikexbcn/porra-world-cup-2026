@@ -42,48 +42,66 @@ const MAPA_ELIMINATORIAS = {
   };
 
 // --- LÓGICA DE TERCEROS (FUERA DEL COMPONENTE PARA EVITAR ERRORES DE ORDEN) ---  
-// 2. FUNCIÓN DE ASIGNACIÓN (Lógica de Descarte con Restricciones FIFA)
-
+// 2. FUNCIÓN DE ASIGNACIÓN INTERNA (Algoritmo de Fuerza Bruta Eficiente para Cruces FIFA)
 const getAsignacionTerceros = (datostablas) => {
-      const ranking = getMejoresTerceros(datostablas);
-    const asignados = {};
-    const usados = new Set();
+  const ranking = getMejoresTerceros(datostablas);
+  if (ranking.length < 8) return {};
 
-    // 1. Definimos los "asientos" disponibles (partidos)
-    const slots = [
-      { id: 'M74', permitidos: ['A', 'B', 'C', 'D', 'F'] },
-      { id: 'M77', permitidos: ['C', 'D', 'F', 'G', 'H'] },
-      { id: 'M79', permitidos: ['C', 'E', 'F', 'H', 'I'] },
-      { id: 'M80', permitidos: ['E', 'H', 'I', 'J', 'K'] },
-      { id: 'M81', permitidos: ['B', 'E', 'F', 'I', 'J'] },
-      { id: 'M82', permitidos: ['A', 'E', 'H', 'I', 'J'] },
-      { id: 'M85', permitidos: ['E', 'F', 'G', 'I', 'J'] },
-      { id: 'M87', permitidos: ['D', 'E', 'I', 'J', 'L'] }
-    ];
+  // Los 8 partidos que esperan un mejor tercero
+  const slots = [
+    { id: 'M74', permitidos: ['A', 'B', 'C', 'D', 'F'] },
+    { id: 'M77', permitidos: ['C', 'D', 'F', 'G', 'H'] },
+    { id: 'M79', permitidos: ['C', 'E', 'F', 'H', 'I'] },
+    { id: 'M80', permitidos: ['E', 'H', 'I', 'J', 'K'] },
+    { id: 'M81', permitidos: ['B', 'E', 'F', 'I', 'J'] },
+    { id: 'M82', permitidos: ['A', 'E', 'H', 'I', 'J'] },
+    { id: 'M85', permitidos: ['E', 'F', 'G', 'I', 'J'] },
+    { id: 'M87', permitidos: ['D', 'E', 'I', 'J', 'L'] }
+  ];
 
-    // 2. Ordenamos el ranking para que los grupos K y L tengan prioridad absoluta de elección
-    // Si un equipo es del grupo K o L, lo procesamos antes que a los demás para que no se queden sin sitio
-    const rankingPriorizado = [...ranking].sort((a, b) => {
-      const prioridad = { 'K': 1, 'L': 1, 'A': 2, 'B': 2, 'G': 2 };
-      const pA = prioridad[a.grupo] || 10;
-      const pB = prioridad[b.grupo] || 10;
-      return pA - pB;
-    });
+  let mejorSolucion = null;
 
-    // 3. Asignamos: Cada equipo busca el primer partido de su lista de permitidos que esté libre
-    rankingPriorizado.forEach(equipo => {
-      const partidoLibre = slots.find(slot => 
-        slot.permitidos.includes(equipo.grupo) && !asignados[slot.id]
-      );
+  // Función recursiva interna para probar todas las permutaciones matemáticas de asignación
+  const permutar = (index, asignacionActual, usadosIndices) => {
+    // Si ya hemos asignado los 8 slots con éxito, guardamos la combinación como solución válida
+    if (index === slots.length) {
+      mejorSolucion = { ...asignacionActual };
+      return true; // Encontramos una solución perfecta, rompemos el bucle
+    }
 
-      if (partidoLibre) {
-        asignados[partidoLibre.id] = equipo.nombre;
-        usados.add(equipo.nombre);
+    const slotActivo = slots[index];
+
+    // Recorremos los 8 equipos del ranking para ver cuál encaja legalmente en este slot
+    for (let i = 0; i < ranking.length; i++) {
+      if (usadosIndices.has(i)) continue;
+
+      const equipo = ranking[i];
+
+      // Verificación estricta de pasaporte: ¿El grupo de este equipo está permitido en este partido?
+      if (slotActivo.permitidos.includes(equipo.grupo)) {
+        // Hacemos el intento de asignación
+        asignacionActual[slotActivo.id] = equipo.nombre;
+        usadosIndices.add(i);
+
+        // Saltamos al siguiente partido (siguiente slot)
+        if (permutar(index + 1, asignacionActual, usadosIndices)) {
+          return true; // Si la cadena de asignaciones es exitosa, propagamos el éxito hacia arriba
+        }
+
+        // Si la asignación causó un callejón sin salida más adelante, rebobinamos (Backtracking)
+        delete asignacionActual[slotActivo.id];
+        usadosIndices.delete(i);
       }
-    });
-
-    return asignados;
+    }
+    return false;
   };
+
+  // Arrancamos el motor de combinaciones con objetos limpios
+  permutar(0, {}, new Set());
+
+  // Si por alguna razón de datos corruptos no encuentra combinación perfecta, devuelve un objeto vacío
+  return mejorSolucion || {};
+};
 
 const PartidoCard = ({ partido, getNombreReal, getFlag, isLockedFinal }) => {
   const local = getNombreReal(partido.local);
