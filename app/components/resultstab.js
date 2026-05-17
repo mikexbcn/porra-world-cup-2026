@@ -1,10 +1,32 @@
 // app/components/resultstab.js
 import { useState, useEffect } from 'react'
+import { supabase } from '../../supabaseClient'
 
 export default function ResultsTab({ partidos, pronosticos, t, getFlag }) {
   // Ponemos que arranque por defecto en 'GROUP A'
   const [filtroFase, setFiltroFase] = useState('GROUP A')
 
+// --- NUEVO: Cargar los resultados de Premios Extra y Podio Oficial ---
+  const [extrasOficiales, setExtrasOficiales] = useState(null)
+
+  useEffect(() => {
+    async function obtenerExtrasOficiales() {
+      try {
+        const { data, error } = await supabase
+          .from('extra_results')
+          .select('*')
+          .eq('id', 1)
+          .single()
+
+        if (error) throw error
+        if (data) setExtrasOficiales(data)
+      } catch (err) {
+        console.error("Error obteniendo resultados extra oficiales:", err)
+      }
+    }
+    obtenerExtrasOficiales()
+  }, [])
+  
   // 1. Array con el orden oficial cronológico del torneo
   const ordenOficial = [
     'GROUP A', 'GROUP B', 'GROUP C', 'GROUP D', 'GROUP E', 'GROUP F', 
@@ -98,9 +120,68 @@ export default function ResultsTab({ partidos, pronosticos, t, getFlag }) {
                   </div>
                 </div>
               )
-            })
+})
           )}
         </div>
+
+        {/* --- NUEVO: MOSTRAR PODIO Y PREMIOS EXTRA REALES --- */}
+        {extrasOficiales && (
+          (extrasOficiales.champion || extrasOficiales.runner_up || extrasOficiales.third_place || 
+           extrasOficiales.top_scorer || extrasOficiales.best_keeper || extrasOficiales.best_player || 
+           extrasOficiales.best_young || extrasOficiales.fair_play)
+        ) && (
+          <div className="mt-8 pt-8 border-t border-white/10 space-y-6">
+            <h3 className="text-sm font-black text-yellow-500 italic uppercase tracking-widest text-center flex items-center justify-center gap-2">
+              🏅 PODIO Y PREMIOS EXTRA REALES
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Bloque visual de Podio de Honor */}
+              <div className="bg-black/40 border border-white/5 p-4 rounded-2xl space-y-2.5">
+                <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-2 border-b border-white/5 pb-1">🏆 PODIO FINAL</p>
+                
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-400 font-bold uppercase text-[10px]">1º Campeón:</span>
+                  <span className="font-black text-yellow-500 tracking-wide">{extrasOficiales.champion || 'POR DEFINIR'}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-400 font-bold uppercase text-[10px]">2º Subcampeón:</span>
+                  <span className="font-black text-white tracking-wide">{extrasOficiales.runner_up || 'POR DEFINIR'}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-400 font-bold uppercase text-[10px]">3º Tercer Puesto:</span>
+                  <span className="font-black text-orange-400 tracking-wide">{extrasOficiales.third_place || 'POR DEFINIR'}</span>
+                </div>
+              </div>
+
+              {/* Bloque visual de Galardones */}
+              <div className="bg-black/40 border border-white/5 p-4 rounded-2xl space-y-2.5">
+                <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-2 border-b border-white/5 pb-1">✨ PREMIOS INDIVIDUALES</p>
+                
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-400 font-bold uppercase text-[9px]">Máx. Goleador:</span>
+                  <span className="font-black text-white">{extrasOficiales.top_scorer || 'POR DEFINIR'}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-400 font-bold uppercase text-[9px]">Mejor Portero:</span>
+                  <span className="font-black text-white">{extrasOficiales.best_keeper || 'POR DEFINIR'}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-400 font-bold uppercase text-[9px]">Mejor Jugador:</span>
+                  <span className="font-black text-white">{extrasOficiales.best_player || 'POR DEFINIR'}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-400 font-bold uppercase text-[9px]">Mejor Joven:</span>
+                  <span className="font-black text-white">{extrasOficiales.best_young || 'POR DEFINIR'}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-400 font-bold uppercase text-[9px]">Fair Play:</span>
+                  <span className="font-black text-white">{extrasOficiales.fair_play || 'POR DEFINIR'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
