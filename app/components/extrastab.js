@@ -146,26 +146,28 @@ if (error) throw error;
 
         {/* --- FIN DATALISTS --- */}
 
-        {/* BOTÓN CON EL MISMO DISEÑO DE BLOQUEO QUE LOS GRUPOS */}
+{/* BOTÓN CON CORRECCIÓN VISUAL DE ESTADOS */}
         <button
           onClick={handleSaveExtras}
-          disabled={session?.user?.email === 'demo@mundial.com' || sinCambios}
+          disabled={session?.user?.email === 'demo@mundial.com' || (sinCambios && (extras.top_scorer || extras.best_player || extras.best_keeper))}
           className={`w-full py-5 font-black uppercase rounded-2xl text-xs mt-10 transition-all flex items-center justify-center gap-2 tracking-widest ${
             session?.user?.email === 'demo@mundial.com' 
               ? 'bg-gray-800 text-gray-500 cursor-not-allowed' 
               : sinCambios
-                ? 'bg-white/5 text-gray-400 border border-white/10 cursor-not-allowed shadow-none' 
-                : 'bg-yellow-500 text-black shadow-[0_10px_20px_rgba(234,179,8,0.2)] hover:scale-[1.02] active:scale-95'
+                ? (extras.top_scorer || extras.best_player || extras.best_keeper)
+                  ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 shadow-none' // Estado: Guardado con éxito
+                  : 'bg-yellow-500 text-black shadow-[0_10px_20px_rgba(234,179,8,0.2)] hover:scale-[1.02]' // Estado: Vacío inicial listo para escribir
+                : 'bg-yellow-500 text-black shadow-[0_10px_20px_rgba(234,179,8,0.2)] hover:scale-[1.02] active:scale-95' // Estado: Modificado listo para guardar
           }`}
         >
           {session?.user?.email === 'demo@mundial.com' ? (
             <>🔒 MODO LECTURA</>
-          ) : sinCambios ? (
+          ) : sinCambios && (extras.top_scorer || extras.best_player || extras.best_keeper) ? (
             <>
-              <span className="text-sm">🔒</span> {t.nav_extras_saved || 'PRONÓSTICOS GUARDADOS'}
+              <span className="text-sm">✅</span> {t.nav_extras_saved || 'PRONÓSTICOS GUARDADOS'}
             </>
           ) : (
-            'GUARDAR PREMIOS EXTRAS'
+            <>⚽ GUARDAR PREMIOS EXTRAS</>
           )}
         </button>
 
