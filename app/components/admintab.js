@@ -35,30 +35,45 @@ export default function AdminTab({ session, partidos, setPartidos, t, getFlag })
     )
   }
 
-  // Guardar el resultado de un partido individual
+// Guardar el resultado de un partido individual
   const handleGuardarResultado = async (matchId) => {
+
+    console.log("=== REVISANDO OBJETO PARTIDO COMPLETO ===", partidos.find(m => m.id === matchId));
+    
+    // DIAGNÓSTICO EXTERNO E INTERNO
+    console.log("=== CLICK EN GRABAR ===");
+    console.log("1. matchId recibido en la función:", matchId);
+    console.log("2. Tipo de dato de matchId:", typeof matchId);
+    console.log("3. Contenido de 'resultados' entero:", resultados);
+    console.log("4. Goles recuperados para este ID:", resultados[matchId]);
+
     const scoreHome = resultados[matchId]?.h
     const scoreAway = resultados[matchId]?.a
 
-    if (scoreHome === '' || scoreAway === '') {
+    console.log("5. Goles desglosados -> Home:", scoreHome, "Away:", scoreAway);
+
+    if (scoreHome === '' || scoreAway === '' || scoreHome === undefined || scoreAway === undefined) {
+      console.log("🚫 SE CORTA EL FLUJO POR GOLES VACÍOS O UNDEFINED");
       return alert("Introduce ambos goles antes de guardar.")
     }
 
     setLoadingMatchId(matchId)
 
     try {
-      // Hacemos el update usando tus columnas reales: home_score y away_score
-      const { error } = await supabase
+      console.log("🚀 ENVIANDO CONSULTA A SUPABASE...");
+      const { data, error } = await supabase
         .from('matches')
         .update({
           home_score: parseInt(scoreHome, 10),
           away_score: parseInt(scoreAway, 10)
         })
         .eq('id', matchId)
+        .select(); // Le pedimos que nos devuelva lo que altere
 
       if (error) throw error
 
-      // Actualizar el estado local de los partidos para que se vea reflejado sin recargar
+      console.log("✅ RESPUESTA DE SUPABASE (filas afectadas):", data);
+
       setPartidos(prev => 
         prev.map(m => m.id === matchId 
           ? { ...m, home_score: parseInt(scoreHome, 10), away_score: parseInt(scoreAway, 10) } 
@@ -68,7 +83,7 @@ export default function AdminTab({ session, partidos, setPartidos, t, getFlag })
 
       alert("Resultado oficial guardado con éxito.")
     } catch (err) {
-      console.error("Error guardando resultado oficial:", err)
+      console.error("❌ ERROR CAPTURADO EN EL CATCH:", err)
       alert("Error: " + err.message)
     } finally {
       setLoadingMatchId(null)
