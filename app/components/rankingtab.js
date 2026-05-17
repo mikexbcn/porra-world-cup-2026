@@ -1,7 +1,7 @@
 // app/components/rankingtab.js
 import { useState, useEffect } from 'react'
 import { supabase } from '../../supabaseClient'
-import { calcularPuntosPartido } from '../libs/motorPuntos'
+import { calcularPuntosPartido } from '../libs/motorpuntos'
 
 export default function RankingTab({ partidos, t }) {
   const [clasificacion, setClasificacion] = useState([])
