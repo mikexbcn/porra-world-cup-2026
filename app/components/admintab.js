@@ -76,59 +76,56 @@ export default function AdminTab({ session, partidos, setPartidos, t, getFlag })
   }
 
 // Guardar el resultado de un partido individual
+// Guardar el resultado y nombres de un partido individual
+// Guardar el resultado y nombres de un partido individual
   const handleGuardarResultado = async (matchId) => {
-
-    console.log("=== REVISANDO OBJETO PARTIDO COMPLETO ===", partidos.find(m => m.id === matchId));
+    const partidoActual = partidos.find(m => m.id === matchId);
     
-    // DIAGNÓSTICO EXTERNO E INTERNO
-    console.log("=== CLICK EN GRABAR ===");
-    console.log("1. matchId recibido en la función:", matchId);
-    console.log("2. Tipo de dato de matchId:", typeof matchId);
-    console.log("3. Contenido de 'resultados' entero:", resultados);
-    console.log("4. Goles recuperados para este ID:", resultados[matchId]);
+    const scoreHome = resultados[matchId]?.h;
+    const scoreAway = resultados[matchId]?.a;
 
-    const scoreHome = resultados[matchId]?.h
-    const scoreAway = resultados[matchId]?.a
-
-    console.log("5. Goles desglosados -> Home:", scoreHome, "Away:", scoreAway);
-
-    if (scoreHome === '' || scoreAway === '' || scoreHome === undefined || scoreAway === undefined) {
-      console.log("🚫 SE CORTA EL FLUJO POR GOLES VACÍOS O UNDEFINED");
-      return alert("Introduce ambos goles antes de guardar.")
-    }
-
-    setLoadingMatchId(matchId)
+    setLoadingMatchId(matchId);
 
     try {
-      console.log("🚀 ENVIANDO CONSULTA A SUPABASE...");
+      // Preparamos los datos a enviar
+      const datosActualizados = {
+        home_team: partidoActual.home_team,
+        away_team: partidoActual.away_team,
+        // Si hay goles se transforman a número, si no, se guardan como null
+        home_score: scoreHome !== '' && scoreHome !== undefined ? parseInt(scoreHome, 10) : null,
+        away_score: scoreAway !== '' && scoreAway !== undefined ? parseInt(scoreAway, 10) : null
+      };
+
       const { data, error } = await supabase
         .from('matches')
-        .update({
-          home_score: parseInt(scoreHome, 10),
-          away_score: parseInt(scoreAway, 10)
-        })
+        .update(datosActualizados)
         .eq('id', matchId)
-        .select(); // Le pedimos que nos devuelva lo que altere
+        .select();
 
-      if (error) throw error
+      if (error) throw error;
 
-      console.log("✅ RESPUESTA DE SUPABASE (filas afectadas):", data);
-
+      // Actualizamos el estado local de React para que no se pierdan los cambios en pantalla
       setPartidos(prev => 
         prev.map(m => m.id === matchId 
-          ? { ...m, home_score: parseInt(scoreHome, 10), away_score: parseInt(scoreAway, 10) } 
+          ? { 
+              ...m, 
+              home_team: partidoActual.home_team, 
+              away_team: partidoActual.away_team, 
+              home_score: scoreHome !== '' && scoreHome !== undefined ? parseInt(scoreHome, 10) : null, 
+              away_score: scoreAway !== '' && scoreAway !== undefined ? parseInt(scoreAway, 10) : null 
+            } 
           : m
         )
-      )
+      );
 
-      alert("Resultado oficial guardado con éxito.")
+      alert("Partido oficial actualizado con éxito en el sistema.");
     } catch (err) {
-      console.error("❌ ERROR CAPTURADO EN EL CATCH:", err)
-      alert("Error: " + err.message)
+      console.error("❌ ERROR CAPTURADO EN EL CATCH:", err);
+      alert("Error: " + err.message);
     } finally {
-      setLoadingMatchId(null)
+      setLoadingMatchId(null);
     }
-  }
+  };
 
   // Manejar el cambio de texto en los inputs
   const handleInputChange = (matchId, campo, valor) => {
@@ -221,9 +218,22 @@ export default function AdminTab({ session, partidos, setPartidos, t, getFlag })
 
               return (
                 <div key={mId} className="bg-black/40 border border-white/5 p-4 rounded-2xl flex items-center justify-between gap-4">
-                  {/* Local */}
+                 {/* Local - Solo texto en Grupos, INPUT en eliminatorias */}
                   <div className="flex items-center gap-2 flex-1 justify-end">
-                    <span className="text-xs font-black uppercase tracking-wider">{m.home_team}</span>
+                    {filtroFase.startsWith('GROUP') ? (
+                      <span className="text-xs font-black uppercase tracking-wider">{m.home_team}</span>
+                    ) : (
+                      <input
+                        type="text"
+                        value={m.home_team || ''}
+                        onChange={(e) => {
+                          const valor = e.target.value.toUpperCase();
+                          setPartidos(prev => prev.map(p => p.id === mId ? { ...p, home_team: valor } : p));
+                        }}
+                        placeholder="CÓDIGO (Ej: 2A)"
+                        className="bg-black/80 border border-white/10 px-2 py-1.5 rounded-xl text-xs font-black text-white w-28 text-right focus:outline-none focus:border-red-500 uppercase"
+                      />
+                    )}
                     {getFlag && <img src={getFlag(m.home_team)} alt="" className="w-5 h-3.5 object-cover rounded-sm inline-block" />}
                   </div>
 
@@ -248,10 +258,23 @@ export default function AdminTab({ session, partidos, setPartidos, t, getFlag })
                     />
                   </div>
 
-                  {/* Visitante */}
+                  {/* Visitante - Solo texto en Grupos, INPUT en eliminatorias */}
                   <div className="flex items-center gap-2 flex-1 justify-start">
                     {getFlag && <img src={getFlag(m.away_team)} alt="" className="w-5 h-3.5 object-cover rounded-sm inline-block" />}
-                    <span className="text-xs font-black uppercase tracking-wider">{m.away_team}</span>
+                    {filtroFase.startsWith('GROUP') ? (
+                      <span className="text-xs font-black uppercase tracking-wider">{m.away_team}</span>
+                    ) : (
+                      <input
+                        type="text"
+                        value={m.away_team || ''}
+                        onChange={(e) => {
+                          const valor = e.target.value.toUpperCase();
+                          setPartidos(prev => prev.map(p => p.id === mId ? { ...p, away_team: valor } : p));
+                        }}
+                        placeholder="CÓDIGO (Ej: 2B)"
+                        className="bg-black/80 border border-white/10 px-2 py-1.5 rounded-xl text-xs font-black text-white w-28 text-left focus:outline-none focus:border-red-500 uppercase"
+                      />
+                    )}
                   </div>
 
                   {/* Botón de Guardar por Partido */}

@@ -1,7 +1,7 @@
 // app/components/rankingtab.js
 import { useState, useEffect } from 'react'
 import { supabase } from '../../supabaseClient'
-import { calcularPuntosPartido } from '../libs/motorpuntos'
+import { calcularPuntosPartido, calcularPuntosPorEquipoClasificado } from '../libs/motorpuntos'
 
 export default function RankingTab({ partidos, t }) {
   const [clasificacion, setClasificacion] = useState([])
@@ -18,10 +18,10 @@ export default function RankingTab({ partidos, t }) {
           .select('id, username')
         if (errUsers) throw errUsers
 
-        // 2. Traer absolutamente todas las predicciones de la app
+        // 2. Traer absolutamente todas las predicciones de la app (¡Incluyendo el equipo seleccionado!)
         const { data: todasLasPredicciones, error: errPreds } = await supabase
           .from('predictions')
-          .select('user_id, match_id, prediction_home, prediction_away')
+          .select('user_id, match_id, prediction_home, prediction_away, selected_team')
         if (errPreds) throw errPreds
 
         // Mapear los partidos oficiales por ID para acceso ultra rápido
@@ -35,20 +35,26 @@ export default function RankingTab({ partidos, t }) {
           // Filtrar las predicciones que pertenecen a este usuario concreto
           const apuestasUsuario = todasLasPredicciones.filter(p => p.user_id === user.id)
           
-          let puntosTotales = 0
+let puntosTotales = 0
 
           apuestasUsuario.forEach(apuesta => {
             const partidoReal = partidosMap[apuesta.match_id]
-            
-            // Si el partido existe y tiene goles oficiales metidos por el admin...
             if (partidoReal) {
-              const puntosObtenidos = calcularPuntosPartido(
+              // 1. Puntos por acertar el Marcador Exacto (Fase 2)
+              puntosTotales += calcularPuntosPartido(
                 apuesta.prediction_home,
                 apuesta.prediction_away,
                 partidoReal.home_score,
                 partidoReal.away_score
               )
-              puntosTotales += puntosObtenidos
+
+              // 2. Puntos por acertar el Equipo Clasificado que progresa de ronda (Fase 1)
+              // Pasamos el equipo que eligió el jugador, el equipo real del Admin y la fase actual del partido
+              puntosTotales += calcularPuntosPorEquipoClasificado(
+                apuesta.selected_team,
+                partidoReal.home_team, // Evaluamos el progreso en base a los equipos que pones en el Admin
+                partidoReal.group_stage
+              )
             }
           })
 
