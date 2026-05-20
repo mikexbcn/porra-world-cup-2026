@@ -2,8 +2,20 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../supabaseClient'
 
-export default function AdminTab({ session, partidos, setPartidos, t, getFlag }) {
+export default function AdminTab({ session, partidos, setPartidos, t, getFlag, jugadores = [] }) {
   const [resultados, setResultados] = useState({})
+  
+  // ESTADOS NUEVOS PARA EL AUTOCOMPLETADO DE LOS EXTRAS EN EL ADMIN
+  const [busquedaGoleador, setBusquedaGoleador] = useState('')
+  const [busquedaJugador, setBusquedaJugador] = useState('')
+  const [busquedaPortero, setBusquedaPortero] = useState('')
+  const [busquedaJoven, setBusquedaJoven] = useState('')
+  
+  const [mostrarGoleador, setMostrarGoleador] = useState(false)
+  const [mostrarJugador, setMostrarJugador] = useState(false)
+  const [mostrarPortero, setMostrarPortero] = useState(false)
+  const [mostrarJoven, setMostrarJoven] = useState(false)
+   
   const [loadingMatchId, setLoadingMatchId] = useState(null)
   const [filtroFase, setFiltroFase] = useState('GROUP A')
 
@@ -19,13 +31,15 @@ export default function AdminTab({ session, partidos, setPartidos, t, getFlag })
   const ADMIN_EMAIL = 'mikemulderx@gmail.com' // <-- CAMBIA ESTO POR TU EMAIL REAL
 
   // Inicializar los inputs con los resultados que ya existan en la BD (home_score y away_score)
+// Inicializar los inputs con los resultados que ya existan en la BD
   useEffect(() => {
     if (partidos && partidos.length > 0) {
       const map = {}
       partidos.forEach(m => {
         map[m.id] = {
           h: m.home_score !== null && m.home_score !== undefined ? m.home_score.toString() : '',
-          a: m.away_score !== null && m.away_score !== undefined ? m.away_score.toString() : ''
+          a: m.away_score !== null && m.away_score !== undefined ? m.away_score.toString() : '',
+          is_finished: m.is_finished || false // <-- NUEVO: Guardamos el estado de la casilla
         }
       })
       setResultados(map)
@@ -78,54 +92,52 @@ export default function AdminTab({ session, partidos, setPartidos, t, getFlag })
 // Guardar el resultado de un partido individual
 // Guardar el resultado y nombres de un partido individual
 // Guardar el resultado y nombres de un partido individual
-  const handleGuardarResultado = async (matchId) => {
-    const partidoActual = partidos.find(m => m.id === matchId);
-    
-    const scoreHome = resultados[matchId]?.h;
-    const scoreAway = resultados[matchId]?.a;
+const handleGuardarResultado = async (matchId, homeTeam, awayTeam) => {
+  const score = resultados[matchId]
+  // Vemos si el administrador ha marcado manualmente el checkbox de este partido
+  const estaFinalizado = resultados[matchId]?.is_finished || false
 
-    setLoadingMatchId(matchId);
+  const tieneHome = score?.h !== undefined && score.h.trim() !== ''
+  const tieneAway = score?.a !== undefined && score.a.trim() !== ''
 
-    try {
-      // Preparamos los datos a enviar
-      const datosActualizados = {
-        home_team: partidoActual.home_team,
-        away_team: partidoActual.away_team,
-        // Si hay goles se transforman a número, si no, se guardan como null
-        home_score: scoreHome !== '' && scoreHome !== undefined ? parseInt(scoreHome, 10) : null,
-        away_score: scoreAway !== '' && scoreAway !== undefined ? parseInt(scoreAway, 10) : null
-      };
+  // Si marca "Finalizado" pero se le olvida poner los goles, le avisamos
+  if (estaFinalizado && (!tieneHome || !tieneAway)) {
+    alert('Para marcar un partido como finalizado debes introducir ambos goles.')
+    return
+  }
 
-      const { data, error } = await supabase
-        .from('matches')
-        .update(datosActualizados)
-        .eq('id', matchId)
-        .select();
+  try {
+    setLoadingMatchId(matchId)
 
-      if (error) throw error;
+    // Si los campos de goles están completamente vacíos, los enviamos como null a la BD
+    const homeScoreValue = tieneHome ? parseInt(score.h, 10) : null
+    const awayScoreValue = tieneAway ? parseInt(score.a, 10) : null
 
-      // Actualizamos el estado local de React para que no se pierdan los cambios en pantalla
-      setPartidos(prev => 
-        prev.map(m => m.id === matchId 
-          ? { 
-              ...m, 
-              home_team: partidoActual.home_team, 
-              away_team: partidoActual.away_team, 
-              home_score: scoreHome !== '' && scoreHome !== undefined ? parseInt(scoreHome, 10) : null, 
-              away_score: scoreAway !== '' && scoreAway !== undefined ? parseInt(scoreAway, 10) : null 
-            } 
-          : m
-        )
-      );
-
-      alert("Partido oficial actualizado con éxito en el sistema.");
-    } catch (err) {
-      console.error("❌ ERROR CAPTURADO EN EL CATCH:", err);
-      alert("Error: " + err.message);
-    } finally {
-      setLoadingMatchId(null);
+    const datosActualizar = {
+      home_score: homeScoreValue,
+      away_score: awayScoreValue,
+      is_finished: estaFinalizado
     }
-  };
+
+    // Actualizamos en Supabase
+    const { error } = await supabase
+      .from('matches')
+      .update(datosActualizar)
+      .eq('id', matchId)
+
+    if (error) throw error
+
+    // Actualizar el estado local para que la interfaz se refresque en vivo
+    setPartidos(prev => prev.map(m => m.id === matchId ? { ...m, ...datosActualizar } : m))
+    alert(`Partido ${homeTeam} vs ${awayTeam} actualizado correctamente.`)
+
+  } catch (err) {
+    console.error('Error guardando resultado:', err)
+    alert('No se pudo guardar el resultado.')
+  } finally {
+    setLoadingMatchId(null)
+  }
+}
 
   // Manejar el cambio de texto en los inputs
   const handleInputChange = (matchId, campo, valor) => {
@@ -216,6 +228,8 @@ export default function AdminTab({ session, partidos, setPartidos, t, getFlag })
               const mId = m.id
               const cargando = loadingMatchId === mId
 
+            // Aseguramos que si jugadores no es un array válido, sea un array vacío por defecto y no rompa los .map()
+              
               return (
                 <div key={mId} className="bg-black/40 border border-white/5 p-4 rounded-2xl flex items-center justify-between gap-4">
                  {/* Local - Solo texto en Grupos, INPUT en eliminatorias */}
@@ -276,6 +290,26 @@ export default function AdminTab({ session, partidos, setPartidos, t, getFlag })
                       />
                     )}
                   </div>
+
+                  {/* === AQUÍ INTRODUCES EL CHECKBOX === */}
+              <div className="flex items-center justify-center gap-2 py-1 bg-white/5 rounded-xl my-2 border border-white/5">
+                <input
+                  type="checkbox"
+                  id={`finished-${m.id}`}
+                  checked={resultados[m.id]?.is_finished || false}
+                  onChange={(e) => setResultados(prev => ({
+                    ...prev,
+                    [m.id]: {
+                      ...prev[m.id],
+                      is_finished: e.target.checked
+                    }
+                  }))}
+                  className="w-4 h-4 accent-yellow-500 cursor-pointer rounded bg-black border-white/20"
+                />
+                <label htmlFor={`finished-${m.id}`} className="text-[10px] font-black tracking-wider text-gray-300 uppercase cursor-pointer select-none">
+                  PARTIDO FINALIZADO 🏁
+                </label>
+              </div>
 
                   {/* Botón de Guardar por Partido */}
                   <button
@@ -340,58 +374,90 @@ export default function AdminTab({ session, partidos, setPartidos, t, getFlag })
               </div>
             </div>
 
-            {/* --- BLOQUE DE PREMIOS EXTRA --- */}
+{/* --- BLOQUE DE PREMIOS EXTRA --- */}
             <div className="bg-black/30 border border-white/5 p-4 rounded-2xl space-y-3">
               <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-2 border-b border-white/5 pb-1">✨ GALARDONES INDIVIDUALES</p>
               
               <div className="grid grid-cols-2 gap-2">
+                {/* Máximo Goleador */}
                 <div className="space-y-1">
                   <label className="block text-[9px] font-bold text-gray-400 uppercase">Máximo Goleador</label>
-                  <input
-                    type="text"
-                    value={extrasOficiales.top_scorer}
+                  <select
+                    value={extrasOficiales.top_scorer || ''}
                     onChange={(e) => setExtrasOficiales(prev => ({ ...prev, top_scorer: e.target.value }))}
-                    placeholder="Pichichi"
-                    className="w-full bg-black border border-white/10 px-2 py-1.5 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500"
-                  />
+                    className="w-full bg-black border border-white/10 px-2 py-1.5 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500 h-[32px]"
+                  >
+                    <option value="">-- Pichichi --</option>
+                    {(jugadores || []).map((jugador, idx) => {
+                      const nombreFormateado = jugador?.name && jugador?.team ? `${jugador.name.toUpperCase()} (${jugador.team.toUpperCase()})` : (jugador?.name || jugador);
+                      return (
+                        <option key={idx} value={nombreFormateado}>{nombreFormateado}</option>
+                      );
+                    })}
+                  </select>
                 </div>
+
+                {/* Mejor Portero */}
                 <div className="space-y-1">
                   <label className="block text-[9px] font-bold text-gray-400 uppercase">Mejor Portero</label>
-                  <input
-                    type="text"
-                    value={extrasOficiales.best_keeper}
+                  <select
+                    value={extrasOficiales.best_keeper || ''}
                     onChange={(e) => setExtrasOficiales(prev => ({ ...prev, best_keeper: e.target.value }))}
-                    placeholder="Guante de Oro"
-                    className="w-full bg-black border border-white/10 px-2 py-1.5 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500"
-                  />
+                    className="w-full bg-black border border-white/10 px-2 py-1.5 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500 h-[32px]"
+                  >
+                    <option value="">-- Guante de Oro --</option>
+                    {(jugadores || []).map((jugador, idx) => {
+                      const nombreFormateado = jugador?.name && jugador?.team ? `${jugador.name.toUpperCase()} (${jugador.team.toUpperCase()})` : (jugador?.name || jugador);
+                      return (
+                        <option key={idx} value={nombreFormateado}>{nombreFormateado}</option>
+                      );
+                    })}
+                  </select>
                 </div>
+
+                {/* Mejor Jugador */}
                 <div className="space-y-1">
                   <label className="block text-[9px] font-bold text-gray-400 uppercase">Mejor Jugador</label>
-                  <input
-                    type="text"
-                    value={extrasOficiales.best_player}
+                  <select
+                    value={extrasOficiales.best_player || ''}
                     onChange={(e) => setExtrasOficiales(prev => ({ ...prev, best_player: e.target.value }))}
-                    placeholder="MVP"
-                    className="w-full bg-black border border-white/10 px-2 py-1.5 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500"
-                  />
+                    className="w-full bg-black border border-white/10 px-2 py-1.5 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500 h-[32px]"
+                  >
+                    <option value="">-- MVP --</option>
+                    {(jugadores || []).map((jugador, idx) => {
+                      const nombreFormateado = jugador?.name && jugador?.team ? `${jugador.name.toUpperCase()} (${jugador.team.toUpperCase()})` : (jugador?.name || jugador);
+                      return (
+                        <option key={idx} value={nombreFormateado}>{nombreFormateado}</option>
+                      );
+                    })}
+                  </select>
                 </div>
+
+                {/* Mejor Joven */}
                 <div className="space-y-1">
                   <label className="block text-[9px] font-bold text-gray-400 uppercase">Mejor Joven</label>
-                  <input
-                    type="text"
-                    value={extrasOficiales.best_young}
+                  <select
+                    value={extrasOficiales.best_young || ''}
                     onChange={(e) => setExtrasOficiales(prev => ({ ...prev, best_young: e.target.value }))}
-                    placeholder="Promesa"
-                    className="w-full bg-black border border-white/10 px-2 py-1.5 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500"
-                  />
+                    className="w-full bg-black border border-white/10 px-2 py-1.5 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500 h-[32px]"
+                  >
+                    <option value="">-- Promesa --</option>
+                    {(jugadores || []).map((jugador, idx) => {
+                      const nombreFormateado = jugador?.name && jugador?.team ? `${jugador.name.toUpperCase()} (${jugador.team.toUpperCase()})` : (jugador?.name || jugador);
+                      return (
+                        <option key={idx} value={nombreFormateado}>{nombreFormateado}</option>
+                      );
+                    })}
+                  </select>
                 </div>
               </div>
 
+              {/* Fair Play (Equipo) */}
               <div className="space-y-1">
                 <label className="block text-[9px] font-bold text-gray-400 uppercase">Fair Play (Equipo)</label>
                 <input
                   type="text"
-                  value={extrasOficiales.fair_play}
+                  value={extrasOficiales.fair_play || ''}
                   onChange={(e) => setExtrasOficiales(prev => ({ ...prev, fair_play: e.target.value.toUpperCase() }))}
                   placeholder="Juego Limpio"
                   className="w-full bg-black border border-white/10 px-3 py-1.5 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500 uppercase"

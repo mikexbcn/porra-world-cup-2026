@@ -337,6 +337,7 @@ return (
           setPartidos={setPartidos}
           t={t}
           getFlag={getFlag}
+          jugadores={jugadores}
         />
       )}
 
