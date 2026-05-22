@@ -313,9 +313,10 @@ return (
 
       {/* --- SECCIÓN DE RANKING GENERAL --- */}
       {tab === 'ranking' && (
-        <RankingTab 
+      <RankingTab 
           partidos={partidos} 
-          t={t} 
+          t={t}
+          tablas={tablas}
         />
       )}
 
