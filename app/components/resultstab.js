@@ -27,11 +27,11 @@ export default function ResultsTab({ partidos, pronosticos, t, getFlag }) {
     obtenerExtrasOficiales()
   }, [])
   
-  // 1. Array con el orden oficial cronológico del torneo
+// 1. Array con el orden oficial cronológico del torneo (Añadido 3RD PLACE antes de la FINAL)
   const ordenOficial = [
     'GROUP A', 'GROUP B', 'GROUP C', 'GROUP D', 'GROUP E', 'GROUP F', 
     'GROUP G', 'GROUP H', 'GROUP I', 'GROUP J', 'GROUP K', 'GROUP L',
-    'ROUND 32', 'ROUND 16', 'QUARTER-FINAL', 'SEMI-FINAL', 'FINAL'
+    'ROUND 32', 'ROUND 16', 'QUARTER-FINAL', 'SEMI-FINAL', '3RD PLACE', 'FINAL'
   ]
 
   // 2. Extraer los grupos reales usando tu columna exacta: group_stage
@@ -39,7 +39,12 @@ export default function ResultsTab({ partidos, pronosticos, t, getFlag }) {
     new Set(partidos.map(m => m.group_stage))
   )
   .filter(Boolean)
-  .sort((a, b) => ordenOficial.indexOf(a) - ordenOficial.indexOf(b))
+  .sort((a, b) => {
+    const indexA = ordenOficial.indexOf(a);
+    const indexB = ordenOficial.indexOf(b);
+    // Si alguna fase de la base de datos no está en el array de control, la manda al final
+    return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
+  })
 
   // 3. Filtrar los partidos del grupo activo usando group_stage
   const partidosFiltrados = partidos.filter(m => m.group_stage === filtroFase)

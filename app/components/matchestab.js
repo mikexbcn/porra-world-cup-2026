@@ -92,7 +92,7 @@ const handleSaveMatches = async () => {
           </div>
           
           <div className="flex flex-wrap justify-center gap-2">
-            {['SEMI-FINAL', 'FINAL'].map(g => (
+            {['SEMI-FINAL', '3RD PLACE', 'FINAL'].map(g => (
               <button key={g} onClick={() => setActivePhase(g)} className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border ${activePhase === g ? 'bg-yellow-500 text-black border-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)]' : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'}`}>{g}</button>
             ))}
 

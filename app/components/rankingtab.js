@@ -75,8 +75,8 @@ export default function RankingTab({ partidos, t, tablas: tablasOficiales }) {
         // ── FASES ROUND 16 EN ADELANTE (desde matches) ──
         const equiposRealesEnFase = {
           "ROUND 16": new Set(),
-          "QUARTER-FINALS": new Set(),
-          "SEMI-FINALS": new Set(),
+          "QUARTER-FINAL": new Set(),
+          "SEMI-FINAL": new Set(),
           "3RD PLACE": new Set(),
           "FINAL": []
         }
@@ -104,8 +104,8 @@ export default function RankingTab({ partidos, t, tablas: tablasOficiales }) {
         const clasificadosFinales = {
           "ROUND 32": Array.from(equiposRealesRound32),
           "ROUND 16": Array.from(equiposRealesEnFase["ROUND 16"]),
-          "QUARTER-FINALS": Array.from(equiposRealesEnFase["QUARTER-FINALS"]),
-          "SEMI-FINALS": Array.from(equiposRealesEnFase["SEMI-FINALS"]),
+          "QUARTER-FINAL": Array.from(equiposRealesEnFase["QUARTER-FINAL"]),
+          "SEMI-FINAL": Array.from(equiposRealesEnFase["SEMI-FINAL"]),
           "3RD PLACE": Array.from(equiposRealesEnFase["3RD PLACE"]),
           "FINAL": equiposRealesEnFase["FINAL"]
         }
@@ -172,10 +172,10 @@ const tercerosOrdenados = getMejoresTerceros(tablasUsuario)
 
           let puntosTotales = 0
 
-          // ── FASE DE GRUPOS: puntos por marcador exacto ──
+// ── MARCADORES: puntos por marcador exacto (todas las fases) ──
           apuestasUsuario.forEach(apuesta => {
             const partidoReal = partidosMap[apuesta.match_id]
-            if (partidoReal && partidoReal.group_stage?.toUpperCase().startsWith('GROUP')) {
+            if (partidoReal && partidoReal.is_finished) {
               puntosTotales += calcularPuntosPartido(
                 apuesta.prediction_home,
                 apuesta.prediction_away,
@@ -185,11 +185,16 @@ const tercerosOrdenados = getMejoresTerceros(tablasUsuario)
             }
           })
 
+console.log('[' + user.username + '] tras grupos:', puntosTotales)
+
           equiposUsuarioRound32.forEach(equipoUsuario => {
             const coincide = clasificadosFinales["ROUND 32"].includes(equipoUsuario)
             if (user.username === 'Messi' || user.username === 'messi') {
               console.log('R32 check:', equipoUsuario, '→', coincide)
             }
+
+console.log('[' + user.username + '] tras R32:', puntosTotales)
+
             if (coincide) puntosTotales += 1
           })
 
@@ -202,10 +207,42 @@ const tercerosOrdenados = getMejoresTerceros(tablasUsuario)
             // Identificar fase por el ID numérico (con o sin sufijo _local/_visitante)
             const numId = parseInt(matchIdStr, 10)
             if (numId >= 89 && numId <= 96) { faseObjetivo = "ROUND 16"; puntosPorClasificar = 2 }
-            else if (numId >= 97 && numId <= 100) { faseObjetivo = "QUARTER-FINALS"; puntosPorClasificar = 4 }
-            else if (numId === 101 || numId === 102) { faseObjetivo = "SEMI-FINALS"; puntosPorClasificar = 8 }
+            else if (numId >= 97 && numId <= 100) { faseObjetivo = "QUARTER-FINAL"; puntosPorClasificar = 4 }
+            else if (numId === 101 || numId === 102) { faseObjetivo = "SEMI-FINAL"; puntosPorClasificar = 8 }             
             else if (numId === 103) { faseObjetivo = "3RD PLACE"; puntosPorClasificar = 12 }
             else if (numId === 104) { faseObjetivo = "FINAL"; puntosPorClasificar = 10 }
+
+            // ── PÓDIUM ──
+            if (matchIdStr === 'podium_1') {
+              console.log('PODIUM_1 - buscando partido FINAL:', Object.values(partidosMap).map(m => m.group_stage).filter((v,i,a) => a.indexOf(v)===i))
+              // Campeón: 20 pts
+              const partidoFinal = Object.values(partidosMap).find(m => m.group_stage?.toUpperCase() === "FINAL")
+              if (partidoFinal && partidoFinal.is_finished) {
+                let campeon = ""
+                if (partidoFinal.home_score > partidoFinal.away_score) campeon = partidoFinal.home_team
+                else if (partidoFinal.away_score > partidoFinal.home_score) campeon = partidoFinal.away_team
+                if (campeon && campeon.toUpperCase().trim() === apuesta.selected_team?.toUpperCase().trim()) puntosTotales += 20
+              }
+              return
+            }
+            if (matchIdStr === 'podium_3') {
+              // Tercer puesto: 12 pts
+              const partido3 = Object.values(partidosMap).find(m => m.group_stage?.toUpperCase() === "3RD PLACE")
+              if (partido3 && partido3.is_finished) {
+                let tercero = ""
+                if (partido3.home_score > partido3.away_score) tercero = partido3.home_team
+                else if (partido3.away_score > partido3.home_score) tercero = partido3.away_team
+                if (tercero && tercero.toUpperCase().trim() === apuesta.selected_team?.toUpperCase().trim()) puntosTotales += 12
+              }
+              return
+            }
+            
+            if (matchIdStr === 'podium_2' || matchIdStr === 'podium_4') return
+            if (numId === 103) return
+
+if (user.username === 'Messi' || user.username === 'messi') {
+  console.log('APUESTA:', matchIdStr, '| fase:', faseObjetivo, '| equipo:', apuesta.selected_team)
+}
 
             if (!faseObjetivo) return
             if (!apuesta.selected_team || apuesta.selected_team === 'null') return
@@ -217,14 +254,6 @@ const tercerosOrdenados = getMejoresTerceros(tablasUsuario)
               // 10 pts por cada finalista acertado
               if (listaReales.includes(equipoPredicho)) puntosTotales += 10
 
-              // 20 pts extra por acertar el campeón
-              const partidoFinal = Object.values(partidosMap).find(m => m.group_stage?.toUpperCase() === "FINAL")
-              if (partidoFinal && partidoFinal.is_finished) {
-                let campeon = ""
-                if (partidoFinal.home_score > partidoFinal.away_score) campeon = partidoFinal.home_team
-                else if (partidoFinal.away_score > partidoFinal.home_score) campeon = partidoFinal.away_team
-                if (campeon && campeon.toUpperCase().trim() === equipoPredicho) puntosTotales += 20
-              }
             } else if (faseObjetivo === "3RD PLACE") {
               const partido3 = Object.values(partidosMap).find(m => m.group_stage?.toUpperCase() === "3RD PLACE")
               if (partido3 && partido3.is_finished) {
@@ -236,6 +265,8 @@ const tercerosOrdenados = getMejoresTerceros(tablasUsuario)
             } else {
               if (listaReales.includes(equipoPredicho)) puntosTotales += puntosPorClasificar
             }
+
+
 
             // Marcador exacto en eliminatorias (5 pts)
             const idCuadro = numId
@@ -256,6 +287,8 @@ const tercerosOrdenados = getMejoresTerceros(tablasUsuario)
               }
             }
           })
+
+console.log('[' + user.username + '] tras bracket:', puntosTotales)
 
           // ── PREMIOS EXTRA ──
           try {
