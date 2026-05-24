@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
+import { getMejoresTerceros } from '../libs/utils';
 
 const MAPA_ELIMINATORIAS = {
   // ROUND 16
@@ -18,28 +19,6 @@ const MAPA_ELIMINATORIAS = {
   103: { local: 101, visitante: 102 }, // 3er Puesto
   104: { local: 101, visitante: 102 }  // Final
 };
-
-  // 1. FUNCIÓN MATEMÁTICA: Obtener ranking de mejores terceros
-  const getMejoresTerceros = (datostablas) => {
-    const terceros = [];
-    const grupos = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
-
-    if (!datostablas) return [];
-    
-    grupos.forEach(letra => {
-      const nombreGrupo = `GROUP ${letra}`;
-      const tabla = datostablas[nombreGrupo];
-      if (tabla && tabla[2]) {
-        terceros.push({ ...tabla[2], grupo: letra });
-      }
-    });
-
-    return terceros.sort((a, b) => {
-      if (b.pts !== a.pts) return b.pts - a.pts;
-      if (b.dg !== a.dg) return b.dg - a.dg;
-      return b.gf - a.gf;
-    }).slice(0, 8);
-  };
 
 // --- LÓGICA DE TERCEROS (FUERA DEL COMPONENTE PARA EVITAR ERRORES DE ORDEN) ---  
 // 2. FUNCIÓN DE ASIGNACIÓN INTERNA (Algoritmo de Fuerza Bruta Eficiente para Cruces FIFA)

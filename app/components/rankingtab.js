@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../supabaseClient'
 import { calcularPuntosPartido } from '../libs/motorpuntos'
+import { getMejoresTerceros } from '../libs/utils'
 
 export default function RankingTab({ partidos, t, tablas: tablasOficiales }) {
   const [clasificacion, setClasificacion] = useState([])
@@ -69,6 +70,8 @@ export default function RankingTab({ partidos, t, tablas: tablasOficiales }) {
         } 
         })
 
+        console.log('ROUND 32 reales completo:', Array.from(equiposRealesRound32))
+
         // ── FASES ROUND 16 EN ADELANTE (desde matches) ──
         const equiposRealesEnFase = {
           "ROUND 16": new Set(),
@@ -121,8 +124,8 @@ export default function RankingTab({ partidos, t, tablas: tablasOficiales }) {
             .forEach(m => {
               const tienePred = apuestasUsuario.some(p => p.match_id === m.id)
               if (!tienePred) return
-              if (!eq[m.home_team]) eq[m.home_team] = { nombre: m.home_team, pts: 0, gd: 0 }
-              if (!eq[m.away_team]) eq[m.away_team] = { nombre: m.away_team, pts: 0, gd: 0 }
+              if (!eq[m.home_team]) eq[m.home_team] = { nombre: m.home_team, pts: 0, gd: 0, gf: 0 }
+              if (!eq[m.away_team]) eq[m.away_team] = { nombre: m.away_team, pts: 0, gd: 0, gf: 0 }             
                 const pred = apuestasUsuario.find(p => p.match_id === m.id)
                 if (pred && pred.prediction_home !== null && pred.prediction_away !== null) {
                   const h = parseInt(pred.prediction_home, 10)
@@ -130,14 +133,18 @@ export default function RankingTab({ partidos, t, tablas: tablasOficiales }) {
                   if (!isNaN(h) && !isNaN(a)) {
                     eq[m.home_team].gd += (h - a)
                     eq[m.away_team].gd += (a - h)
-                    if (h > a) eq[m.home_team].pts += 3
-                    else if (a > h) eq[m.away_team].pts += 3
-                    else { eq[m.home_team].pts += 1; eq[m.away_team].pts += 1 }
+                    eq[m.home_team].gf += h
+                    eq[m.away_team].gf += a
+                  if (h > a) eq[m.home_team].pts += 3
+                  else if (a > h) eq[m.away_team].pts += 3
+                  else { eq[m.home_team].pts += 1; eq[m.away_team].pts += 1 }
                   }
                 }
               })
-            tablasUsuario[grupo] = Object.values(eq).sort((a, b) => b.pts - a.pts || b.gd - a.gd)
+              tablasUsuario[grupo] = Object.values(eq).sort((a, b) => b.pts !== a.pts ? b.pts - a.pts : b.gd !== a.gd ? b.gd - a.gd : (b.gf||0) !== (a.gf||0) ? (b.gf||0) - (a.gf||0) : a.nombre.localeCompare(b.nombre))
           })
+
+          console.log('[' + user.username + '] GROUP C:', tablasUsuario['GROUP C']?.map(e => e.nombre + ' pts:' + e.pts + ' gd:' + e.gd + ' gf:' + e.gf))
 
           // Equipos del usuario en ROUND 32 (1º y 2º de cada grupo + 8 mejores terceros)
           const equiposUsuarioRound32 = new Set()
@@ -150,13 +157,18 @@ export default function RankingTab({ partidos, t, tablas: tablasOficiales }) {
           grupos.forEach(letra => {
             const tabla = tablasUsuario[`GROUP ${letra}`]
             if (tabla?.[2]?.nombre) {
-              tercerosUsuario.push({ nombre: tabla[2].nombre, pts: tabla[2].pts, gd: tabla[2].gd || 0 })
+              tercerosUsuario.push({ nombre: tabla[2].nombre, pts: tabla[2].pts, gd: tabla[2].gd || 0, gf: tabla[2].gf || 0 })
             }
           })
-          tercerosUsuario
-            .sort((a, b) => b.pts - a.pts || b.gd - a.gd)
+
+const tercerosOrdenados = getMejoresTerceros(tablasUsuario)
+
+          console.log('[' + user.username + '] terceros:', tercerosOrdenados.map(e => e.nombre + ' pts:' + e.pts + ' gd:' + e.gd + ' gf:' + e.gf))
+          tercerosOrdenados
             .slice(0, 8)
             .forEach(e => equiposUsuarioRound32.add(e.nombre.toUpperCase().trim()))
+
+          console.log('[' + user.username + '] ROUND32 completo:', Array.from(equiposUsuarioRound32))
 
           let puntosTotales = 0
 
@@ -173,13 +185,13 @@ export default function RankingTab({ partidos, t, tablas: tablasOficiales }) {
             }
           })
 
-          // ── ROUND 32: 1 pt por cada equipo acertado ──
           equiposUsuarioRound32.forEach(equipoUsuario => {
-            if (clasificadosFinales["ROUND 32"].includes(equipoUsuario)) {
-              puntosTotales += 1
+            const coincide = clasificadosFinales["ROUND 32"].includes(equipoUsuario)
+            if (user.username === 'Messi' || user.username === 'messi') {
+              console.log('R32 check:', equipoUsuario, '→', coincide)
             }
+            if (coincide) puntosTotales += 1
           })
-
 
           // ── ROUND 16 EN ADELANTE: puntos por selected_team ──
           apuestasUsuario.forEach(apuesta => {
