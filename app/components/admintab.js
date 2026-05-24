@@ -251,16 +251,21 @@ const handleGuardarResultado = async (matchId) => {
                     {filtroFase.startsWith('GROUP') ? (
                       <span className="text-xs font-black uppercase tracking-wider">{m.home_team}</span>
                     ) : (
-                      <input
-                        type="text"
-                        value={m.home_team || ''}
-                        onChange={(e) => {
-                          const valor = e.target.value.toUpperCase();
-                          setPartidos(prev => prev.map(p => p.id === mId ? { ...p, home_team: valor } : p));
-                        }}
-                        placeholder="CÓDIGO (Ej: 2A)"
-                        className="bg-black/80 border border-white/10 px-2 py-1.5 rounded-xl text-xs font-black text-white w-28 text-right focus:outline-none focus:border-red-500 uppercase"
-                      />
+                      
+                     <div className="flex flex-col items-end gap-0.5">
+                        <input
+                          type="text"
+                          value={m.home_team || ''}
+                          onChange={(e) => {
+                            const valor = e.target.value.toUpperCase();
+                            setPartidos(prev => prev.map(p => p.id === mId ? { ...p, home_team: valor } : p));
+                          }}
+                          placeholder="CÓDIGO (Ej: 2A)"
+                          className="bg-black/80 border border-white/10 px-2 py-1.5 rounded-xl text-xs font-black text-white w-28 text-right focus:outline-none focus:border-red-500 uppercase"
+                        />
+                        {m.home_team_ref && <span className="text-[9px] text-yellow-600 font-bold uppercase tracking-wider">ref: {m.home_team_ref}</span>}
+                      </div>
+
                     )}
                     {getFlag && <img src={getFlag(m.home_team)} alt="" className="w-5 h-3.5 object-cover rounded-sm inline-block" />}
                   </div>
@@ -292,16 +297,21 @@ const handleGuardarResultado = async (matchId) => {
                     {filtroFase.startsWith('GROUP') ? (
                       <span className="text-xs font-black uppercase tracking-wider">{m.away_team}</span>
                     ) : (
-                      <input
-                        type="text"
-                        value={m.away_team || ''}
-                        onChange={(e) => {
-                          const valor = e.target.value.toUpperCase();
-                          setPartidos(prev => prev.map(p => p.id === mId ? { ...p, away_team: valor } : p));
-                        }}
-                        placeholder="CÓDIGO (Ej: 2B)"
-                        className="bg-black/80 border border-white/10 px-2 py-1.5 rounded-xl text-xs font-black text-white w-28 text-left focus:outline-none focus:border-red-500 uppercase"
-                      />
+                      
+                      <div className="flex flex-col items-start gap-0.5">
+                        <input
+                          type="text"
+                          value={m.away_team || ''}
+                          onChange={(e) => {
+                            const valor = e.target.value.toUpperCase();
+                            setPartidos(prev => prev.map(p => p.id === mId ? { ...p, away_team: valor } : p));
+                          }}
+                          placeholder="CÓDIGO (Ej: 2B)"
+                          className="bg-black/80 border border-white/10 px-2 py-1.5 rounded-xl text-xs font-black text-white w-28 text-left focus:outline-none focus:border-red-500 uppercase"
+                        />
+                        {m.away_team_ref && <span className="text-[9px] text-yellow-600 font-bold uppercase tracking-wider">ref: {m.away_team_ref}</span>}
+                      </div>
+
                     )}
                   </div>
 
