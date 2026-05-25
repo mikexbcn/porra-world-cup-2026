@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { getMejoresTerceros } from '../libs/utils';
+import Swal from 'sweetalert2';
 
 const MAPA_ELIMINATORIAS = {
   // ROUND 16
@@ -566,19 +567,31 @@ const handleEleccion = async (partidoId, lado, equipoNombre) => {
     </div>
 
 {/* BOTÓN DE CIERRE MAESTRO */}
-    <div className="mt-16">
-      <p className="text-[9px] text-gray-500 text-center uppercase font-bold mb-4 italic tracking-widest">
-        {isLockedFinal 
-          ? "Tu apuesta ya está guardada y sellada a fuego" 
-          : (t.confirmDesc || "Al confirmar, tu apuesta quedará bloqueada para el resto del Mundial")}
-      </p>
-      <button 
-        disabled={isLockedFinal}
-        onClick={async () => {
-          // 1. PREGUNTA DE SEGURIDAD ANTES DE BLOQUEAR
-          const seguro = window.confirm("¿Estás completamente seguro de cerrar tu apuesta? Una vez confirmada, no podrás realizar más cambios.");
-          if (!seguro) return; // Si dice que no, nos paramos aquí.
-          
+<div className="mt-16">
+  <p className="text-[9px] text-gray-500 text-center uppercase font-bold mb-4 italic tracking-widest">
+    {isLockedFinal 
+      ? "Tu apuesta ya está guardada y sellada a fuego" 
+      : (t.confirmDesc || "Al confirmar, tu apuesta quedará bloqueada para el resto del Mundial")}
+  </p>
+  <button 
+    disabled={isLockedFinal}
+    onClick={() => {
+      // 1. PREGUNTA DE SEGURIDAD ESTÉTICA CON SWEETALERT2
+      Swal.fire({
+        title: '¿Estás completamente seguro?',
+        text: "Una vez confirmada, tu apuesta quedará bloqueada y no podrás realizar más cambios.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#eab308', // Amarillo de tu botón
+        cancelButtonColor: '#374151',
+        confirmButtonText: 'SÍ, CERRAR APUESTA 🔒',
+        cancelButtonText: 'CANCELAR',
+        customClass: {
+          popup: 'rounded-2xl' // Mantiene la estética redondeada de tus botones
+        }
+      }).then(async (result) => {
+        // Si el usuario acepta, se dispara la lógica
+        if (result.isConfirmed) {
           try {
             // A. Guardado de seguridad de las apuestas actuales antes de cerrar
             const updates = Object.entries(apuestas).map(([key, value]) => ({
@@ -601,23 +614,38 @@ const handleEleccion = async (partidoId, lado, equipoNombre) => {
 
             if (errorLock) throw errorLock;
 
-            alert("¡Apuesta cerrada y bloqueada con éxito! 🔒");
-            window.location.reload(); // Recarga para congelar toda la interfaz
+            // Alerta estética de éxito
+            await Swal.fire({
+              icon: 'success',
+              title: '¡Apuesta cerrada!',
+              text: 'Tu apuesta mundial ha sido bloqueada con éxito. 🔒',
+              confirmButtonColor: '#eab308'
+            });
+
+            // Recarga la página después de que cierren el aviso de éxito
+            window.location.reload(); 
 
           } catch (err) {
             console.error("Error en el cierre:", err);
-            alert("No se pudo cerrar la apuesta: " + err.message);
+            Swal.fire({
+              icon: 'error',
+              title: 'No se pudo cerrar',
+              text: "Hubo un error: " + err.message,
+              confirmButtonColor: '#eab308'
+            });
           }
-        }}
-        className={`w-full py-5 text-sm font-black uppercase italic tracking-[0.2em] rounded-2xl transition-all duration-300 ${
-          isLockedFinal
-            ? "bg-white/5 text-gray-500 border border-white/5 cursor-not-allowed shadow-none active:scale-100"
-            : "bg-yellow-500 hover:bg-yellow-400 text-black shadow-[0_10px_30px_rgba(234,179,8,0.2)] active:scale-95"
-        }`}
-      >
-        {isLockedFinal ? "APUESTA MUNDIAL BLOQUEADA 🔒" : (t.confirmAll || 'Cerrar Apuesta Mundial 🔒')}
-      </button>
-    </div>
+        }
+      });
+    }}
+    className={`w-full py-5 text-sm font-black uppercase italic tracking-[0.2em] rounded-2xl transition-all duration-300 ${
+      isLockedFinal
+        ? "bg-white/5 text-gray-500 border border-white/5 cursor-not-allowed shadow-none active:scale-100"
+        : "bg-yellow-500 hover:bg-yellow-400 text-black shadow-[0_10px_30px_rgba(234,179,8,0.2)] active:scale-95"
+    }`}
+  >
+    {isLockedFinal ? "APUESTA MUNDIAL BLOQUEADA 🔒" : (t.confirmAll || 'Cerrar Apuesta Mundial 🔒')}
+  </button>
+</div>
 
   </div>
 </div>
