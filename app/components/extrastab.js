@@ -1,6 +1,7 @@
 // components/extrastab.js
 import { useState, useEffect } from 'react'
 import { supabase } from '../../supabaseClient'
+import Swal from 'sweetalert2';
 
 export default function ExtrasTab({ t, extras, setExtras, session, setLoading, jugadores = [], setGruposBloqueados }) {
 
@@ -23,7 +24,18 @@ export default function ExtrasTab({ t, extras, setExtras, session, setLoading, j
     (extras.fair_play || '') === (extrasIniciales.fair_play || '');
   
   const handleSaveExtras = async () => {
-    if (session?.user?.email === 'demo@mundial.com') return alert("Modo DEMO");
+
+        if (session?.user?.email === 'demo@mundial.com') {
+          Swal.fire({
+            icon: 'info',
+            title: 'Modo DEMO',
+            text: 'No tienes permisos para modificar los premios extras.',
+            confirmButtonColor: '#eab308',
+            customClass: { popup: 'rounded-2xl' }
+          });
+          return;
+        }
+
     setLoading(true);
     try {
       const { error } = await supabase
@@ -70,12 +82,24 @@ if (error) throw error;
         setGruposBloqueados(prev => ({ ...prev, 'extras': true }));
       }
 
-      alert("¡Premios extra guardados!");
+      Swal.fire({
+      icon: 'success',
+      title: '¡Sincronizado!',
+      text: 'Tus pronósticos extras han sido guardados correctamente. 🏆',
+      confirmButtonColor: '#10b981', // Color verde esmeralda a juego con tu botón de éxito
+      customClass: { popup: 'rounded-2xl' }
+      });
 
 
     } catch (err) {
       console.error("Error guardando extras:", err);
-      alert("Error al guardar: " + err.message);
+      Swal.fire({
+      icon: 'error',
+      title: 'Fallo al guardar',
+      text: 'No se pudieron registrar tus premios: ' + err.message,
+      confirmButtonColor: '#ef4444',
+      customClass: { popup: 'rounded-2xl' }
+    });
     } finally {
       setLoading(false);
     }
