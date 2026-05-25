@@ -1,5 +1,6 @@
 // components/matchestab.js
 import { supabase } from '../../supabaseClient'
+import Swal from 'sweetalert2';
 
 export default function MatchesTab({ 
   t, partidos, pronosticos, setPronosticos, tablas, setTablas,
@@ -206,73 +207,99 @@ const handleSaveMatches = async () => {
                 </div>
               ))}
 
-        <button 
-          disabled={isGroupLocked}
-          onClick={async () => {
-            if (session?.user?.email === 'demo@mundial.com') return alert("Modo DEMO");
+<button 
+  disabled={isGroupLocked}
+  onClick={() => {
+    if (session?.user?.email === 'demo@mundial.com') {
+      Swal.fire({ icon: 'info', title: 'Modo DEMO', text: 'No se permiten cambios.' });
+      return;
+    }
 
-            // 1. Pregunta de seguridad antes de cerrar el grupo
-            const seguro = window.confirm(`¿Estás completamente seguro de cerrar el ${activePhase}? Una vez confirmado, no podrás realizar más cambios en estos partidos.`);
-            if (!seguro) return;
+    // 1. Pregunta estética de seguridad con SweetAlert2
+    Swal.fire({
+      title: `¿Estás seguro de cerrar el ${activePhase}?`,
+      text: "Una vez confirmado, no podrás realizar más cambios en estos partidos.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#eab308', // Amarillo de tu botón
+      cancelButtonColor: '#374151',
+      confirmButtonText: 'SÍ, CONFIRMAR',
+      cancelButtonText: 'CANCELAR',
+      customClass: {
+        popup: 'rounded-[25px]' // Mantiene la estética redondeada de tu web
+      }
+    }).then(async (result) => {
+      // Si el usuario confirma, se ejecuta todo lo de dentro
+      if (result.isConfirmed) {
+        try {
+          setLoading(true);
 
-            try {
-              setLoading(true);
+          // A. Primero guardamos los últimos goles por seguridad
+          const updates = partidos
+            .filter(m => m.group_stage === activePhase)
+            .map(m => ({
+              user_id: session.user.id, 
+              match_id: String(m.id),
+              prediction_home: parseInt(pronosticos[m.id]?.h) || 0,
+              prediction_away: parseInt(pronosticos[m.id]?.a) || 0
+            }));
 
-              // A. Primero guardamos los últimos goles por seguridad
-              const updates = partidos
-                .filter(m => m.group_stage === activePhase)
-                .map(m => ({
-                  user_id: session.user.id, 
-                  match_id: String(m.id),
-                  prediction_home: parseInt(pronosticos[m.id]?.h) || 0,
-                  prediction_away: parseInt(pronosticos[m.id]?.a) || 0
-                }));
+          if (updates.length > 0) {
+            await supabase.from('predictions').upsert(updates, { onConflict: 'user_id,match_id' });
+          }
 
-              if (updates.length > 0) {
-                await supabase.from('predictions').upsert(updates, { onConflict: 'user_id,match_id' });
-              }
+          // B. Calculamos el nombre exacto de la columna de la base de datos
+          const columnaCol = `${activePhase.toLowerCase().replace(' ', '_')}_locked`;
 
-              // B. Calculamos el nombre exacto de la columna de la base de datos (Ej: 'group_a_locked')
-              const columnaCol = `${activePhase.toLowerCase().replace(' ', '_')}_locked`;
+          // C. Bloqueamos el grupo definitivo en la tabla profiles
+          const { error: errorLock } = await supabase
+            .from('profiles')
+            .update({ [columnaCol]: true })
+            .eq('id', session.user.id);
 
-              // C. Bloqueamos el grupo definitivo en la tabla profiles
-              const { error: errorLock } = await supabase
-                .from('profiles')
-                .update({ [columnaCol]: true })
-                .eq('id', session.user.id);
+          if (errorLock) throw errorLock;
 
-            if (errorLock) throw errorLock;
+          // ACTUALIZACIÓN EN CALIENTE: Actualiza el estado del candado al vuelo
+          setGruposBloqueados(prev => ({
+            ...prev,
+            [activePhase]: true
+          }));
 
-              // ACTUALIZACIÓN EN CALIENTE: Actualiza el estado del candado al vuelo
-              setGruposBloqueados(prev => ({
-                ...prev,
-                [activePhase]: true
-              }));
+          // Pop-up de éxito que NUNCA bloqueará el navegador
+          Swal.fire({
+            icon: 'success',
+            title: '¡Cerrado con éxito!',
+            text: `¡${activePhase} cerrado y bloqueado! 🔒`,
+            confirmButtonColor: '#eab308'
+          });
 
-              alert(`¡${activePhase} cerrado y bloqueado con éxito! 🔒`);
-
-            } catch (err) {
-
-              console.error("Error al cerrar el grupo:", err);
-              alert("No se pudo cerrar el grupo: " + err.message);
-            } finally {
-              setLoading(false);
-            }
-          }}
-          className={`w-full py-6 font-black uppercase rounded-[25px] text-xs mt-4 mb-10 transition-all ${
-            isGroupLocked 
-              ? 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-60' 
-              : session?.user?.email === 'demo@mundial.com' 
-                ? 'bg-gray-800 text-gray-500' 
-                : 'bg-yellow-500 text-black shadow-lg active:scale-95 hover:bg-yellow-400'
-          }`}
-        >
-          {isGroupLocked 
-            ? `🔒 ${activePhase} CERRADO` 
-            : session?.user?.email === 'demo@mundial.com' 
-              ? '🔒 MODO LECTURA' 
-              : `CONFIRMAR Y CERRAR ${activePhase} 🔒`}
-        </button>
+        } catch (err) {
+          console.error("Error al cerrar el grupo:", err);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: "No se pudo cerrar el grupo: " + err.message
+          });
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
+  }}
+  className={`w-full py-6 font-black uppercase rounded-[25px] text-xs mt-4 mb-10 transition-all ${
+    isGroupLocked 
+      ? 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-60' 
+      : session?.user?.email === 'demo@mundial.com' 
+        ? 'bg-gray-800 text-gray-500' 
+        : 'bg-yellow-500 text-black shadow-lg active:scale-95 hover:bg-yellow-400'
+  }`}
+>
+  {isGroupLocked 
+    ? `🔒 ${activePhase} CERRADO` 
+    : session?.user?.email === 'demo@mundial.com' 
+      ? '🔒 MODO LECTURA' 
+      : `CONFIRMAR Y CERRAR ${activePhase} 🔒`}
+</button>
 
             </>
           )}
