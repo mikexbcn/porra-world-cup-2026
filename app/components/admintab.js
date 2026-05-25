@@ -200,7 +200,7 @@ const handleGuardarResultado = async (matchId) => {
   const ordenOficial = [
     'GROUP A', 'GROUP B', 'GROUP C', 'GROUP D', 'GROUP E', 'GROUP F', 
     'GROUP G', 'GROUP H', 'GROUP I', 'GROUP J', 'GROUP K', 'GROUP L',
-    'ROUND 32', 'ROUND 16', 'QUARTER-FINAL', 'SEMI-FINAL', 'FINAL'
+    'ROUND 32', 'ROUND 16', 'QUARTER-FINAL', 'SEMI-FINAL', '3RD PLACE', 'FINAL'
   ]
 
   // 2. Extraemos los grupos/fases reales usando la columna group_stage y los ordenamos según la lista superior

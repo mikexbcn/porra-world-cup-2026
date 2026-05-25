@@ -175,20 +175,21 @@ if (error) throw error;
           onClick={handleSaveExtras}
           disabled={session?.user?.email === 'demo@mundial.com' || (sinCambios && (extras.top_scorer || extras.best_player || extras.best_keeper))}
           className={`w-full py-5 font-black uppercase rounded-2xl text-xs mt-10 transition-all flex items-center justify-center gap-2 tracking-widest ${
-            session?.user?.email === 'demo@mundial.com' 
+            
+       session?.user?.email === 'demo@mundial.com' 
               ? 'bg-gray-800 text-gray-500 cursor-not-allowed' 
               : sinCambios
                 ? (extras.top_scorer || extras.best_player || extras.best_keeper)
-                  ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 shadow-none' // Estado: Guardado con éxito
-                  : 'bg-yellow-500 text-black shadow-[0_10px_20px_rgba(234,179,8,0.2)] hover:scale-[1.02]' // Estado: Vacío inicial listo para escribir
-                : 'bg-yellow-500 text-black shadow-[0_10px_20px_rgba(234,179,8,0.2)] hover:scale-[1.02] active:scale-95' // Estado: Modificado listo para guardar
-          }`}
+                  ? 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-60' // Estado: Calcado a la fase de grupos
+                  : 'bg-yellow-500 text-black shadow-[0_10px_20px_rgba(234,179,8,0.2)] hover:scale-[1.02]' 
+                : 'bg-yellow-500 text-black shadow-[0_10px_20px_rgba(234,179,8,0.2)] hover:scale-[1.02] active:scale-95'              
+              }`}
         >
           {session?.user?.email === 'demo@mundial.com' ? (
             <>🔒 MODO LECTURA</>
           ) : sinCambios && (extras.top_scorer || extras.best_player || extras.best_keeper) ? (
             <>
-              <span className="text-sm">✅</span> {t.nav_extras_saved || 'PRONÓSTICOS GUARDADOS'}
+              <span className="text-sm">🔒</span> {t.nav_extras_saved || 'PRONÓSTICOS GUARDADOS'}
             </>
           ) : (
             <>⚽ GUARDAR PREMIOS EXTRAS</>
