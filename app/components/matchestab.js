@@ -206,23 +206,29 @@ const handleSaveMatches = async () => {
                           setPronosticos(newP); 
                           recalcularClasificacion(partidos, newP, setTablas);
                         }} 
-                        className="w-16 bg-black border border-white/20 text-center text-4xl font-black text-yellow-500 rounded-2xl py-4" 
-                        placeholder="-" 
-                      />
-                      <span className="text-gray-600 font-black italic">VS</span>
+                      
+                        className={`w-16 bg-black border border-white/20 text-center font-black text-yellow-500 rounded-2xl py-4 ${
+  (pronosticos[match.id]?.h === undefined || pronosticos[match.id]?.h === null || pronosticos[match.id]?.h === '') && Date.now() >= new Date(match.match_date).getTime() ? 'text-sm' : 'text-4xl'
+}`}
+placeholder="-" 
+/>
+<span className="text-gray-600 font-black italic">VS</span>
 
-                      <input 
-                        type={match.match_date && (Date.now() >= new Date(match.match_date).getTime()) && (!pronosticos?.[match.id] || pronosticos[match.id].a === undefined || pronosticos[match.id].a === null || pronosticos[match.id].a === '') ? "text" : "number"} 
-                        min="0"
-                        disabled={isGroupLocked || (match.match_date && Date.now() >= new Date(match.match_date).getTime())}
-                        value={match.match_date && (Date.now() >= new Date(match.match_date).getTime()) && (!pronosticos?.[match.id] || pronosticos[match.id].a === undefined || pronosticos[match.id].a === null || pronosticos[match.id].a === '') ? "N/A" : (pronosticos[match.id]?.a ?? '')} 
-                        onChange={(e) => {
-                          if (parseInt(e.target.value) < 0) return;
-                          const newP = {...pronosticos, [match.id]: {...pronosticos[match.id], a: e.target.value}};
-                          setPronosticos(newP); 
-                          recalcularClasificacion(partidos, newP, setTablas);                      
-                        }} 
-                        className="w-16 bg-black border border-white/20 text-center text-4xl font-black text-yellow-500 rounded-2xl py-4" 
+<input 
+  type={match.match_date && (Date.now() >= new Date(match.match_date).getTime()) && (!pronosticos?.[match.id] || pronosticos[match.id].a === undefined || pronosticos[match.id].a === null || pronosticos[match.id].a === '') ? "text" : "number"} 
+  min="0"
+  disabled={isGroupLocked || (match.match_date && Date.now() >= new Date(match.match_date).getTime())}
+  value={match.match_date && (Date.now() >= new Date(match.match_date).getTime()) && (!pronosticos?.[match.id] || pronosticos[match.id].a === undefined || pronosticos[match.id].a === null || pronosticos[match.id].a === '') ? "N/A" : (pronosticos[match.id]?.a ?? '')} 
+  onChange={(e) => {
+    if (parseInt(e.target.value) < 0) return;
+    const newP = {...pronosticos, [match.id]: {...pronosticos[match.id], a: e.target.value}};
+    setPronosticos(newP); 
+    recalcularClasificacion(partidos, newP, setTablas);                      
+  }} 
+  className={`w-16 bg-black border border-white/20 text-center font-black text-yellow-500 rounded-2xl py-4 ${
+    (pronosticos[match.id]?.a === undefined || pronosticos[match.id]?.a === null || pronosticos[match.id]?.a === '') && Date.now() >= new Date(match.match_date).getTime() ? 'text-sm' : 'text-4xl'
+  }`}
+
                         placeholder="-" 
                       />
 
