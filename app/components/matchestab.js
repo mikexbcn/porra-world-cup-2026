@@ -1,6 +1,7 @@
 // components/matchestab.js
 import { supabase } from '../../supabaseClient'
 import Swal from 'sweetalert2';
+import React, { useState } from 'react';
 
 export default function MatchesTab({ 
   t, partidos, pronosticos, setPronosticos, tablas, setTablas,
@@ -13,6 +14,7 @@ export default function MatchesTab({
 // Comprobamos si el grupo actual está bloqueado en la base de datos
 const isGroupLocked = gruposBloqueados && gruposBloqueados[activePhase] === true;
 const isEliminatoria = ['ROUND 32', 'ROUND 16', 'QUARTER-FINAL', 'SEMI-FINAL', '3RD PLACE', 'FINAL'].includes(activePhase);
+const [menuAbierto, setMenuAbierto] = useState(false);
 
 // Función para saber si un partido ya ha comenzado por fecha
 const isMatchExpired = (matchDateString) => {
@@ -59,70 +61,94 @@ const handleSaveMatches = async () => {
 
 {/* SELECTOR DE FASES */}
       <div className="bg-black/40 backdrop-blur-md p-4 rounded-3xl border border-white/10 mb-8 sticky top-[130px] z-20">
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-wrap justify-center gap-2">
-            {['GROUP A', 'GROUP B', 'GROUP C', 'GROUP D', 'GROUP E', 'GROUP F', 'GROUP G', 'GROUP H'].map(g => {
-              const isLocked = gruposBloqueados && gruposBloqueados[g] === true;
-              return (
-                <button 
-                  key={g} 
-                  onClick={() => setActivePhase(g)} 
+        
+        {/* BOTÓN QUE MUESTRA LA FASE ACTIVA Y ABRE/CIERRA EL MENÚ */}
+        <button
+          onClick={() => setMenuAbierto(!menuAbierto)}
+          className="w-full flex items-center justify-between px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase"
+        >
+          <span className="text-yellow-500">
+            {gruposBloqueados[activePhase] ? `🔒 ${activePhase}` : activePhase === 'EXTRAS' ? '★ EXTRAS' : activePhase}
+          </span>
+          <span className="text-gray-400">{menuAbierto ? '▲ CERRAR' : '▼ CAMBIAR FASE'}</span>
+        </button>
+
+        {/* MENÚ DESPLEGABLE — solo visible cuando menuAbierto === true */}
+        {menuAbierto && (
+          <div className="flex flex-col gap-3 mt-3">
+            <div className="flex flex-wrap justify-center gap-2">
+              {['GROUP A', 'GROUP B', 'GROUP C', 'GROUP D', 'GROUP E', 'GROUP F', 'GROUP G', 'GROUP H'].map(g => {
+                const isLocked = gruposBloqueados && gruposBloqueados[g] === true;
+                return (
+                  <button
+                    key={g}
+                    onClick={() => { setActivePhase(g); setMenuAbierto(false); }}
+                    className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border ${
+                      activePhase === g
+                        ? 'bg-yellow-500 text-black border-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)]'
+                        : isLocked
+                          ? 'bg-red-950/30 text-red-400/60 border-red-900/40 hover:border-red-800/60'
+                          : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'
+                    }`}
+                  >
+                    {isLocked ? `🔒 ${g}` : g}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap justify-center gap-2">
+              {['GROUP I', 'GROUP J', 'GROUP K', 'GROUP L', 'ROUND 32', 'ROUND 16', 'QUARTER-FINAL'].map(g => {
+                const isLocked = gruposBloqueados && gruposBloqueados[g] === true;
+                return (
+                  <button
+                    key={g}
+                    onClick={() => { setActivePhase(g); setMenuAbierto(false); }}
+                    className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border ${
+                      activePhase === g
+                        ? 'bg-yellow-500 text-black border-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)]'
+                        : isLocked
+                          ? 'bg-red-950/30 text-red-400/60 border-red-900/40 hover:border-red-800/60'
+                          : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'
+                    }`}
+                  >
+                    {isLocked ? `🔒 ${g}` : g}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-2">
+              {['SEMI-FINAL', '3RD PLACE', 'FINAL'].map(g => (
+                <button
+                  key={g}
+                  onClick={() => { setActivePhase(g); setMenuAbierto(false); }}
                   className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border ${
-                    activePhase === g 
-                      ? 'bg-yellow-500 text-black border-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)]' 
-                      : isLocked
-                        ? 'bg-red-950/30 text-red-400/60 border-red-900/40 hover:border-red-800/60' 
-                        : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'
+                    activePhase === g
+                      ? 'bg-yellow-500 text-black border-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)]'
+                      : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'
                   }`}
                 >
-                  {isLocked ? `🔒 ${g}` : g}
+                  {g}
                 </button>
-              );
-            })}
-          </div>
-          <div className="flex flex-wrap justify-center gap-2">
-            {['GROUP I', 'GROUP J', 'GROUP K', 'GROUP L', 'ROUND 32', 'ROUND 16', 'QUARTER-FINAL'].map(g => {
-              const isLocked = gruposBloqueados && gruposBloqueados[g] === true;
-              return (
-                <button 
-                  key={g} 
-                  onClick={() => setActivePhase(g)} 
-                  className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border ${
-                    activePhase === g 
-                      ? 'bg-yellow-500 text-black border-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)]' 
-                      : isLocked
-                        ? 'bg-red-950/30 text-red-400/60 border-red-900/40 hover:border-red-800/60' 
-                        : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'
-                  }`}
-                >
-                  {isLocked ? `🔒 ${g}` : g}
-                </button>
-              );
-            })}
-          </div>
-          
-          <div className="flex flex-wrap justify-center gap-2">
-            {['SEMI-FINAL', '3RD PLACE', 'FINAL'].map(g => (
-              <button key={g} onClick={() => setActivePhase(g)} className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border ${activePhase === g ? 'bg-yellow-500 text-black border-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)]' : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'}`}>{g}</button>
-            ))}
+              ))}
 
-          {/* NUEVO BOTÓN DE EXTRAS */}
-            <button 
-              onClick={() => setActivePhase('EXTRAS')} 
-              className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border flex items-center justify-center gap-1.5 ${
-                activePhase === 'EXTRAS' 
-                  ? 'bg-purple-600 text-white border-purple-600 shadow-[0_0_10px_rgba(147,51,234,0.4)]' 
-                  : gruposBloqueados['extras']
-                    ? 'bg-red-950/20 text-red-400/70 border-red-500/20 font-bold'
-                    : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'
-              }`}
-            >
-              {gruposBloqueados['extras'] && activePhase !== 'EXTRAS' && <span className="text-[10px]">🔒</span>}
-              {activePhase === 'EXTRAS' ? '★ EXTRAS' : gruposBloqueados['extras'] ? 'EXTRAS' : '★ EXTRAS'}
-            </button>
-
-          </div>    
-        </div>
+              {/* BOTÓN EXTRAS */}
+              <button
+                onClick={() => { setActivePhase('EXTRAS'); setMenuAbierto(false); }}
+                className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border flex items-center justify-center gap-1.5 ${
+                  activePhase === 'EXTRAS'
+                    ? 'bg-purple-600 text-white border-purple-600 shadow-[0_0_10px_rgba(147,51,234,0.4)]'
+                    : gruposBloqueados['extras']
+                      ? 'bg-red-950/20 text-red-400/70 border-red-500/20 font-bold'
+                      : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'
+                }`}
+              >
+                {gruposBloqueados['extras'] && activePhase !== 'EXTRAS' && <span className="text-[10px]">🔒</span>}
+                {activePhase === 'EXTRAS' ? '★ EXTRAS' : gruposBloqueados['extras'] ? 'EXTRAS' : '★ EXTRAS'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* TABLA DE POSICIONES */}
