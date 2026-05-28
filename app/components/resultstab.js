@@ -73,10 +73,10 @@ export default function ResultsTab({ partidos, pronosticos, t, getFlag }) {
           ))}
         </div>
 
-        {/* Lista de partidos con resultados oficiales */}
+      {/* Lista de partidos con resultados oficiales MULTIIDIOMA */}
         <div className="space-y-4">
           {partidosFiltrados.length === 0 ? (
-            <p className="text-xs text-center text-gray-500 py-4">No hay partidos en esta fase.</p>
+            <p className="text-xs text-center text-gray-500 py-4">{t.results_no_matches || 'No hay partidos en esta fase.'}</p>
           ) : (
             partidosFiltrados.map((m) => {
               const mId = m.id.toString()
@@ -114,22 +114,22 @@ export default function ResultsTab({ partidos, pronosticos, t, getFlag }) {
 
                   {/* Comparación con tu Pronóstico */}
                   <div className="flex justify-center items-center gap-2 text-[10px] font-black uppercase tracking-wider bg-white/5 py-1.5 px-4 rounded-xl max-w-xs mx-auto w-full">
-                    <span className="text-gray-400">Tu pronóstico:</span>
+                    <span className="text-gray-400">{t.results_your_bet || 'Tu pronóstico:'}</span>
                     {hizoPronostico ? (
                       <span className="text-yellow-500 bg-black/40 px-2 py-0.5 rounded border border-white/5">
                         {pr.h} - {pr.a}
                       </span>
                     ) : (
-                      <span className="text-red-500">Sin pronóstico</span>
+                      <span className="text-red-500">{t.results_no_bet || 'Sin pronóstico'}</span>
                     )}
                   </div>
                 </div>
               )
-})
+            })
           )}
         </div>
 
-        {/* --- NUEVO: MOSTRAR PODIO Y PREMIOS EXTRA REALES --- */}
+ {/* --- MOSTRAR PODIO Y PREMIOS EXTRA REALES INTERNACIONALIZADO --- */}
         {extrasOficiales && (
           (extrasOficiales.champion || extrasOficiales.runner_up || extrasOficiales.third_place || 
            extrasOficiales.top_scorer || extrasOficiales.best_keeper || extrasOficiales.best_player || 
@@ -137,51 +137,51 @@ export default function ResultsTab({ partidos, pronosticos, t, getFlag }) {
         ) && (
           <div className="mt-8 pt-8 border-t border-white/10 space-y-6">
             <h3 className="text-sm font-black text-yellow-500 italic uppercase tracking-widest text-center flex items-center justify-center gap-2">
-              🏅 PODIO Y PREMIOS EXTRA REALES
+              🏆 {t.results_extras_title || 'PODIO Y PREMIOS EXTRA REALES'}
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Bloque visual de Podio de Honor */}
               <div className="bg-black/40 border border-white/5 p-4 rounded-2xl space-y-2.5">
-                <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-2 border-b border-white/5 pb-1">🏆 PODIO FINAL</p>
+                <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-2 border-b border-white/5 pb-1">👑 {t.podium_final_title || 'PODIO FINAL'}</p>
                 
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-400 font-bold uppercase text-[10px]">1º Campeón:</span>
-                  <span className="font-black text-yellow-500 tracking-wide">{extrasOficiales.champion || 'POR DEFINIR'}</span>
+                  <span className="text-gray-400 font-bold uppercase text-[10px]">{t.podium_1st || '1º Campeón:'}</span>
+                  <span className="font-black text-yellow-500 tracking-wide">{extrasOficiales.champion || t.to_be_defined || 'POR DEFINIR'}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-400 font-bold uppercase text-[10px]">2º Subcampeón:</span>
-                  <span className="font-black text-white tracking-wide">{extrasOficiales.runner_up || 'POR DEFINIR'}</span>
+                  <span className="text-gray-400 font-bold uppercase text-[10px]">{t.podium_2nd || '2º Subcampeón:'}</span>
+                  <span className="font-black text-white tracking-wide">{extrasOficiales.runner_up || t.to_be_defined || 'POR DEFINIR'}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-400 font-bold uppercase text-[10px]">3º Tercer Puesto:</span>
-                  <span className="font-black text-orange-400 tracking-wide">{extrasOficiales.third_place || 'POR DEFINIR'}</span>
+                  <span className="text-gray-400 font-bold uppercase text-[10px]">{t.podium_3rd || '3º Tercer Puesto:'}</span>
+                  <span className="font-black text-orange-400 tracking-wide">{extrasOficiales.third_place || t.to_be_defined || 'POR DEFINIR'}</span>
                 </div>
               </div>
 
               {/* Bloque visual de Galardones */}
               <div className="bg-black/40 border border-white/5 p-4 rounded-2xl space-y-2.5">
-                <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-2 border-b border-white/5 pb-1">✨ PREMIOS INDIVIDUALES</p>
+                <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-2 border-b border-white/5 pb-1">🏅 {t.rules_special_pts || 'PREMIOS INDIVIDUALES'}</p>
                 
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-400 font-bold uppercase text-[9px]">Máx. Goleador:</span>
-                  <span className="font-black text-white">{extrasOficiales.top_scorer || 'POR DEFINIR'}</span>
+                  <span className="text-gray-400 font-bold uppercase text-[9px]">{t.extra_pichichi || 'Máx. Goleador:'}</span>
+                  <span className="font-black text-white">{extrasOficiales.top_scorer || t.to_be_defined || 'POR DEFINIR'}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-400 font-bold uppercase text-[9px]">Mejor Portero:</span>
-                  <span className="font-black text-white">{extrasOficiales.best_keeper || 'POR DEFINIR'}</span>
+                  <span className="text-gray-400 font-bold uppercase text-[9px]">{t.extra_gk || 'Mejor Portero:'}</span>
+                  <span className="font-black text-white">{extrasOficiales.best_keeper || t.to_be_defined || 'POR DEFINIR'}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-400 font-bold uppercase text-[9px]">Mejor Jugador:</span>
-                  <span className="font-black text-white">{extrasOficiales.best_player || 'POR DEFINIR'}</span>
+                  <span className="text-gray-400 font-bold uppercase text-[9px]">{t.extra_mvp || 'Mejor Jugador:'}</span>
+                  <span className="font-black text-white">{extrasOficiales.best_player || t.to_be_defined || 'POR DEFINIR'}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-400 font-bold uppercase text-[9px]">Mejor Joven:</span>
-                  <span className="font-black text-white">{extrasOficiales.best_young || 'POR DEFINIR'}</span>
+                  <span className="text-gray-400 font-bold uppercase text-[9px]">{t.extra_young || 'Mejor Joven:'}</span>
+                  <span className="font-black text-white">{extrasOficiales.best_young || t.to_be_defined || 'POR DEFINIR'}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-400 font-bold uppercase text-[9px]">Fair Play:</span>
-                  <span className="font-black text-white">{extrasOficiales.fair_play || 'POR DEFINIR'}</span>
+                  <span className="text-gray-400 font-bold uppercase text-[9px]">{t.extra_fairplay || 'Fair Play:'}</span>
+                  <span className="font-black text-white">{extrasOficiales.fair_play || t.to_be_defined || 'POR DEFINIR'}</span>
                 </div>
               </div>
             </div>

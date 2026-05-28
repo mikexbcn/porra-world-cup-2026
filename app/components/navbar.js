@@ -1,10 +1,11 @@
 // components/navbar.js
 
 export default function Navbar({ t, tab, setTab }) {
-  // Estas son las 6 pestañas que tienes en tu page.js del jueves
+  // Array completo con las 6 pestañas de navegación de la app internacionalizadas
   const menuItems = [
     { id: 'rules', label: t.nav_inicio },
     { id: 'matches', label: t.nav_pronosticos },
+    { id: 'extras', label: t.nav_extras || 'EXTRAS' },
     { id: 'results', label: t.nav_resultados },
     { id: 'ranking', label: t.nav_ranking },
     { id: 'bets', label: t.nav_apuestas }

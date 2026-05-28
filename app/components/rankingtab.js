@@ -331,26 +331,27 @@ console.log('[' + user.username + '] tras bracket:', puntosTotales)
   }, [])
 
   if (loading) {
-    return <div className="text-center text-xs font-black text-yellow-500 uppercase tracking-widest py-12">Calculando máquina de puntos...</div>
+    return <div className="text-center text-xs font-black text-yellow-500 uppercase tracking-widest py-12">{t.ranking_loading || 'Calculando máquina de puntos...'}</div>
   }
 
-  return (
+return (
     <div className="max-w-md mx-auto pb-20 animate-fade-in">
       <div className="bg-white/5 border border-white/10 rounded-3xl p-6 shadow-2xl">
         <h2 className="text-xl font-black text-yellow-500 italic uppercase mb-6 text-center tracking-widest">
-          🏆 CLASIFICACIÓN GENERAL
+          🏆 {t.ranking_title || 'CLASIFICACIÓN GENERAL'}
         </h2>
 
         <div className="overflow-hidden rounded-2xl border border-white/5 bg-black/30">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-white/10 bg-white/5 text-[10px] font-black uppercase text-gray-400 tracking-wider">
-                <th className="p-4 text-center w-16">POS</th>
-                <th className="p-4">USUARIO</th>
-                <th className="p-4 text-right w-24">PUNTOS</th>
+                <th className="p-4 text-center w-16">{t.ranking_pos || 'POS'}</th>
+                <th className="p-4">{t.ranking_user || 'USUARIO'}</th>
+                <th className="p-4 text-right w-24">{t.stats_pts || 'PUNTOS'}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5 text-sm font-bold">
+
+          <tbody className="divide-y divide-white/5 text-sm font-bold">
               {clasificacion.map((u, index) => {
                 const esTop3 = index < 3
                 const medallas = ['🥇', '🥈', '🥉']
@@ -363,7 +364,7 @@ console.log('[' + user.username + '] tras bracket:', puntosTotales)
                       {u.username}
                     </td>
                     <td className="p-4 text-right font-black text-yellow-500 text-sm">
-                      {u.puntos} <span className="text-[10px] font-normal text-gray-400">PTS</span>
+                      {u.puntos} <span className="text-[10px] font-normal text-gray-400">{t.stats_pts || 'PTS'}</span>
                     </td>
                   </tr>
                 )
@@ -372,8 +373,9 @@ console.log('[' + user.username + '] tras bracket:', puntosTotales)
           </table>
 
           {clasificacion.length === 0 && (
-            <p className="text-xs text-center text-gray-500 py-6">No hay usuarios registrados.</p>
+            <p className="text-xs text-center text-gray-500 py-6">{t.ranking_no_users || 'No hay usuarios registrados.'}</p>
           )}
+
         </div>
       </div>
     </div>

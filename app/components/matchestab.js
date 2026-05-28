@@ -15,6 +15,8 @@ export default function MatchesTab({
 const isGroupLocked = gruposBloqueados && gruposBloqueados[activePhase] === true;
 const isEliminatoria = ['ROUND 32', 'ROUND 16', 'QUARTER-FINAL', 'SEMI-FINAL', '3RD PLACE', 'FINAL'].includes(activePhase);
 const [menuAbierto, setMenuAbierto] = useState(false);
+// Detectamos el locale adecuado inspeccionando una clave del diccionario
+const fechaLocale = t.stats_pj === 'GP' ? 'en-US' : t.stats_pj === 'PJ' && t.menu_extras === 'EXTRAS' ? 'es-ES' : 'ca-ES';
 
 // Función para saber si un partido ya ha comenzado por fecha
 const isMatchExpired = (matchDateString) => {
@@ -25,8 +27,8 @@ const isMatchExpired = (matchDateString) => {
 };
   
 const handleSaveMatches = async () => {
-    if (session?.user?.email === 'demo@mundial.com') return alert("Modo DEMO");
-    if (isGroupLocked) return alert("Este grupo ya está cerrado y no se puede modificar."); // <--- AÑADIDO AQUÍ
+    if (session?.user?.email === 'demo@mundial.com') return alert(t.matches_demo);
+    if (isGroupLocked) return alert(t.matches_group_locked);
     
     setLoading(true);
 
@@ -47,10 +49,10 @@ const handleSaveMatches = async () => {
         .upsert(updates, { onConflict: 'user_id,match_id' });
 
       if (error) throw error;
-      alert("Guardado ✓");
+      alert(t.matches_saved);
     } catch (err) {
       console.error("Error en handleSaveMatches:", err);
-      alert("Error al guardar: " + err.message);
+      alert((t.matches_save_error || 'Error: ') + err.message);
     } finally {
       setLoading(false);
     }
@@ -62,15 +64,15 @@ const handleSaveMatches = async () => {
 {/* SELECTOR DE FASES */}
       <div className="bg-black/40 backdrop-blur-md p-4 rounded-3xl border border-white/10 mb-8 sticky top-[130px] z-20">
         
-        {/* BOTÓN QUE MUESTRA LA FASE ACTIVA Y ABRE/CIERRA EL MENÚ */}
+{/* BOTÓN QUE MUESTRA LA FASE ACTIVA Y ABRE/CIERRA EL MENÚ */}
         <button
           onClick={() => setMenuAbierto(!menuAbierto)}
           className="w-full flex items-center justify-between px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase"
         >
-          <span className="text-yellow-500">
-            {gruposBloqueados[activePhase] ? `🔒 ${activePhase}` : activePhase === 'EXTRAS' ? '★ EXTRAS' : activePhase}
-          </span>
-          <span className="text-gray-400">{menuAbierto ? '▲ CERRAR' : '▼ CAMBIAR FASE'}</span>
+        <span className="text-yellow-500">
+          {gruposBloqueados[activePhase] ? `🔒 ${activePhase}` : activePhase === 'EXTRAS' ? `★ ${t.menu_extras || 'EXTRAS'}` : activePhase}
+        </span>
+        <span className="text-gray-400">{menuAbierto ? t.matches_close_menu : t.matches_change_phase}</span>
         </button>
 
         {/* MENÚ DESPLEGABLE — solo visible cuando menuAbierto === true */}
@@ -132,7 +134,7 @@ const handleSaveMatches = async () => {
                 </button>
               ))}
 
-              {/* BOTÓN EXTRAS */}
+              {/* BOTÓN EXTRAS MULTIIDIOMA */}
               <button
                 onClick={() => { setActivePhase('EXTRAS'); setMenuAbierto(false); }}
                 className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border flex items-center justify-center gap-1.5 ${
@@ -144,17 +146,18 @@ const handleSaveMatches = async () => {
                 }`}
               >
                 {gruposBloqueados['extras'] && activePhase !== 'EXTRAS' && <span className="text-[10px]">🔒</span>}
-                {activePhase === 'EXTRAS' ? '★ EXTRAS' : gruposBloqueados['extras'] ? 'EXTRAS' : '★ EXTRAS'}
+                {activePhase === 'EXTRAS' ? `★ ${t.menu_extras || 'EXTRAS'}` : gruposBloqueados['extras'] ? (t.menu_extras || 'EXTRAS') : `★ ${t.menu_extras || 'EXTRAS'}`}
               </button>
+
             </div>
           </div>
         )}
       </div>
 
-      {/* TABLA DE POSICIONES */}
+{/* TABLA DE POSICIONES */}
       {activePhase.includes('GROUP') && tablas[activePhase] && (
         <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mb-8">
-          <h3 className="text-[10px] font-black text-yellow-500 uppercase mb-4 text-center">Posiciones {activePhase}</h3>
+          <h3 className="text-[10px] font-black text-yellow-500 uppercase mb-4 text-center">{t.matches_standings} {activePhase}</h3>
           {tablas[activePhase].map(eq => (
             <div key={eq.nombre} className="flex justify-between items-center py-2 border-b border-white/5">
               <div className="flex items-center gap-3">
@@ -162,8 +165,8 @@ const handleSaveMatches = async () => {
                 <span className="text-[10px] font-black uppercase">{eq.nombre}</span>
               </div>
               <div className="flex gap-4">
-                <span className="text-[10px] text-gray-600 font-mono">{eq.pj} PJ</span>
-                <span className="text-yellow-500 font-black text-[11px]">{eq.pts} PTS</span>
+                <span className="text-[10px] text-gray-600 font-mono">{eq.pj} {t.stats_pj || 'PJ'}</span>
+                <span className="text-yellow-500 font-black text-[11px]">{eq.pts} {t.stats_pts || 'PTS'}</span>
               </div>
             </div>
           ))}
@@ -175,25 +178,25 @@ const handleSaveMatches = async () => {
         <div className="space-y-4">
           {partidos.filter(m => m.group_stage === activePhase).length === 0 ? (
             <div className="bg-white/5 border border-dashed border-white/10 rounded-3xl p-10 text-center text-gray-400 font-black uppercase text-[10px]">
-              No hay partidos para {activePhase}
+              {t.matches_no_matches || 'No hay partidos para'} {activePhase}
             </div>
           ) : (
             <>
               {partidos.filter(m => m.group_stage === activePhase).map(match => (
                 <div key={match.id} className="bg-white/5 border border-white/10 rounded-3xl p-6">
 
-                {/* --- BLOQUE DE FECHA INICIO (NUEVO) --- */}
+                {/* --- BLOQUE DE FECHA INICIO (INTERNACIONALIZADO) --- */}
                   <div className="text-center mb-4">
                     <span className="text-[10px] font-bold text-white/40 uppercase tracking-[2px] block">
                       {match.match_date ? (
-                        new Date(match.match_date).toLocaleString('es-ES', {
+                        new Date(match.match_date).toLocaleString(fechaLocale, {
                           weekday: 'short',
                           day: '2-digit',
                           month: 'short',
                           hour: '2-digit',
                           minute: '2-digit'
                         }).replace('.', '')
-                      ) : 'Fecha TBD'}
+                      ) : t('matches_date_tbd')}
                     </span>
 
                   {match.match_date && (Date.now() >= new Date(match.match_date).getTime()) && (
@@ -201,11 +204,11 @@ const handleSaveMatches = async () => {
                       const tieneApuesta = pronosticos?.[match.id]?.h !== undefined && pronosticos?.[match.id]?.h !== null && pronosticos?.[match.id]?.h !== '';
                       return tieneApuesta ? (
                         <span className="text-[9px] bg-green-950/80 text-green-400 font-black px-3 py-1 rounded-full uppercase tracking-wider inline-block mt-2 border border-green-800/30">
-                          🔒 Apuesta cerrada
+                          {t('matches_bet_closed')}
                         </span>
                       ) : (
                         <span className="text-[9px] bg-red-950/80 text-red-400 font-black px-3 py-1 rounded-full uppercase tracking-wider inline-block mt-2 border border-red-800/30">
-                          ⚠️ Sin apuesta
+                          {t('matches_no_bet')}
                         </span>
                       );
                     })()
@@ -267,12 +270,12 @@ placeholder="-"
                 </div>
               ))}
 
-              {/* BOTÓN GUARDAR PARA FASES ELIMINATORIAS */}
+             {/* BOTÓN GUARDAR PARA FASES ELIMINATORIAS */}
               {isEliminatoria && (
                 <button
                   onClick={async () => {
                     if (session?.user?.email === 'demo@mundial.com') {
-                      Swal.fire({ icon: 'info', title: 'Modo DEMO', text: 'No se permiten cambios.' });
+                      Swal.fire({ icon: 'info', title: t.demo_title || 'Modo DEMO', text: t.demo_text || 'No se permiten cambios.' });
                       return;
                     }
                     const updates = partidos
@@ -286,7 +289,7 @@ placeholder="-"
                         prediction_away: parseInt(pronosticos[m.id]?.a) ?? null
                       }));
                     if (updates.length === 0) {
-                      Swal.fire({ icon: 'warning', title: 'Nada que guardar', text: 'No hay pronósticos pendientes o todos los partidos ya han comenzado.' });
+                      Swal.fire({ icon: 'warning', title: t.matches_nothing_to_save, text: t.matches_nothing_to_save });
                       return;
                     }
                     try {
@@ -295,16 +298,17 @@ placeholder="-"
                         .from('predictions')
                         .upsert(updates, { onConflict: 'user_id,match_id' });
                       if (error) throw error;
-                      Swal.fire({ icon: 'success', title: '¡Guardado!', text: 'Tus pronósticos han sido guardados ✓', confirmButtonColor: '#eab308' });
+                      Swal.fire({ icon: 'success', title: t.matches_saved, text: t.matches_saved_ok || '¡Guardado correctamente!', confirmButtonColor: '#eab308' });
                     } catch (err) {
-                      Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo guardar: ' + err.message });
+                      Swal.fire({ icon: 'error', title: 'Error', text: (t.matches_save_error || 'No se pudo guardar: ') + err.message });
                     } finally {
                       setLoading(false);
                     }
                   }}
+
                   className="w-full py-6 font-black uppercase rounded-[25px] text-xs mt-4 mb-4 transition-all bg-yellow-500 text-black shadow-lg active:scale-95 hover:bg-yellow-400"
                 >
-                  GUARDAR PRONÓSTICOS {activePhase} ✓
+                  {t.matches_save_btn} {activePhase} ✓
                 </button>
               )}
 
@@ -313,22 +317,22 @@ placeholder="-"
                 style={{ display: isEliminatoria ? 'none' : undefined }}
                 onClick={() => {
                   if (session?.user?.email === 'demo@mundial.com') {
-                    Swal.fire({ icon: 'info', title: 'Modo DEMO', text: 'No se permiten cambios.' });
+                    Swal.fire({ icon: 'info', title: t.demo_title || 'Modo DEMO', text: t.demo_text || 'No se permiten cambios.' });
                     return;
                   }
 
-                    // 1. Pregunta estética de seguridad con SweetAlert2
+                    // 1. Pregunta estética de seguridad con SweetAlert2 completamente traducida
                     Swal.fire({
-                      title: `¿Estás seguro de cerrar el ${activePhase}?`,
-                      text: "Una vez confirmado, no podrás realizar más cambios en estos partidos.",
+                      title: `${t.matches_confirm_close || '¿Cerrar'} ${activePhase}?`,
+                      text: t.matches_group_locked,
                       icon: 'warning',
                       showCancelButton: true,
-                      confirmButtonColor: '#eab308', // Amarillo de tu botón
+                      confirmButtonColor: '#eab308', 
                       cancelButtonColor: '#374151',
-                      confirmButtonText: 'SÍ, CONFIRMAR',
-                      cancelButtonText: 'CANCELAR',
+                      confirmButtonText: t.btn_confirm || 'SÍ, CONFIRMAR',
+                      cancelButtonText: t.btn_cancel || 'CANCELAR',
                       customClass: {
-                        popup: 'rounded-[25px]' // Mantiene la estética redondeada de tu web
+                        popup: 'rounded-[25px]' 
                       }
                     }).then(async (result) => {
                       // Si el usuario confirma, se ejecuta todo lo de dentro
@@ -351,7 +355,6 @@ placeholder="-"
                           }
 
                           // B. Calculamos el nombre exacto de la columna de la base de datos
-                          
                           const columnaCol = `${activePhase.toLowerCase().replace(' ', '_')}_locked`;
 
                           // C. Bloqueamos el grupo definitivo en la tabla profiles
@@ -368,11 +371,11 @@ placeholder="-"
                             [activePhase]: true
                           }));
 
-                          // Pop-up de éxito que NUNCA bloqueará el navegador
+                          // Pop-up de éxito internacionalizado
                           Swal.fire({
                             icon: 'success',
-                            title: '¡Cerrado con éxito!',
-                            text: `¡${activePhase} cerrado y bloqueado! 🔒`,
+                            title: t.lock_success_title || '¡Cerrado con éxito!',
+                            text: `${activePhase} ${t.matches_locked_btn} 🔒`,
                             confirmButtonColor: '#eab308'
                           });
 
@@ -397,11 +400,11 @@ placeholder="-"
                         : 'bg-yellow-500 text-black shadow-lg active:scale-95 hover:bg-yellow-400'
                   }`}
                 >
-                  {isGroupLocked 
-                    ? `🔒 ${activePhase} CERRADO` 
-                    : session?.user?.email === 'demo@mundial.com' 
-                      ? '🔒 MODO LECTURA' 
-                      : `CONFIRMAR Y CERRAR ${activePhase} 🔒`}
+                {isGroupLocked 
+                  ? `🔒 ${activePhase} ${t.matches_locked_btn}` 
+                  : session?.user?.email === 'demo@mundial.com' 
+                    ? t.matches_readonly_btn
+                    : `${t.matches_confirm_btn} ${activePhase} 🔒`}
                 </button>
               
             </>

@@ -37,12 +37,12 @@ export default function RulesTab({ t, perfil, lang }) {
             {t.inst_title}
           </h3>
           
-          {/* BOTÓN PDF CON ACCIÓN DE DESCARGA DIRECTA */}
+          {/* BOTÓN PDF MULTIIDIOMA CON ACCIÓN DE DESCARGA DIRECTA */}
           <button 
             onClick={handleDownloadPDF}
             className="text-[9px] font-black bg-white/10 hover:bg-white/20 text-gray-400 py-2 px-4 rounded-full transition-all border border-white/5 whitespace-nowrap active:scale-95"
           >
-            PDF RULES ↓
+            {t.btn_pdf_rules || 'PDF RULES ↓'}
           </button>
         </div>
 
@@ -62,23 +62,23 @@ export default function RulesTab({ t, perfil, lang }) {
         <div className="mb-8">
           <h3 className="text-[10px] font-black text-white/40 uppercase mb-4 tracking-widest">{t.rules_progression}</h3>
           <ul className="space-y-3">
-            <li className="flex justify-between border-b border-white/5 pb-2"><span className="text-[10px] text-gray-300 uppercase font-bold">{t.rule_p32}</span><span className="text-yellow-500 font-black">1 PT</span></li>
-            <li className="flex justify-between border-b border-white/5 pb-2"><span className="text-[10px] text-gray-300 uppercase font-bold">{t.rule_p16}</span><span className="text-yellow-500 font-black">2 PTS</span></li>
-            <li className="flex justify-between border-b border-white/5 pb-2"><span className="text-[10px] text-gray-300 uppercase font-bold">{t.rule_pqf}</span><span className="text-yellow-500 font-black">4 PTS</span></li>
-            <li className="flex justify-between border-b border-white/5 pb-2"><span className="text-[10px] text-gray-300 uppercase font-bold">{t.rule_psf}</span><span className="text-yellow-500 font-black">8 PTS</span></li>
-            <li className="flex justify-between border-b border-white/5 pb-2"><span className="text-[10px] text-gray-300 uppercase font-bold">{t.rule_pf}</span><span className="text-yellow-500 font-black">10 PTS</span></li>
+            <li className="flex justify-between border-b border-white/5 pb-2"><span className="text-[10px] text-gray-300 uppercase font-bold">{t.rule_p32}</span><span className="text-yellow-500 font-black">1 {t.stats_pt || 'PT'}</span></li>
+            <li className="flex justify-between border-b border-white/5 pb-2"><span className="text-[10px] text-gray-300 uppercase font-bold">{t.rule_p16}</span><span className="text-yellow-500 font-black">2 {t.stats_pts || 'PTS'}</span></li>
+            <li className="flex justify-between border-b border-white/5 pb-2"><span className="text-[10px] text-gray-300 uppercase font-bold">{t.rule_pqf}</span><span className="text-yellow-500 font-black">4 {t.stats_pts || 'PTS'}</span></li>
+            <li className="flex justify-between border-b border-white/5 pb-2"><span className="text-[10px] text-gray-300 uppercase font-bold">{t.rule_psf}</span><span className="text-yellow-500 font-black">8 {t.stats_pts || 'PTS'}</span></li>
+            <li className="flex justify-between border-b border-white/5 pb-2"><span className="text-[10px] text-gray-300 uppercase font-bold">{t.rule_pf}</span><span className="text-yellow-500 font-black">10 {t.stats_pts || 'PTS'}</span></li>
           </ul>
         </div>
 
         <div className="grid grid-cols-2 gap-8">
            <div>
               <h3 className="text-[10px] font-black text-white/40 uppercase mb-4 tracking-widest">{t.rules_results}</h3>
-              <div className="flex justify-between"><span className="text-[10px] text-gray-300 uppercase font-bold">{t.rules_exact}</span><span className="text-yellow-500 font-black">5 PTS</span></div>
+              <div className="flex justify-between"><span className="text-[10px] text-gray-300 uppercase font-bold">{t.rules_exact}</span><span className="text-yellow-500 font-black">5 {t.stats_pts || 'PTS'}</span></div>
            </div>
            <div>
               <h3 className="text-[10px] font-black text-white/40 uppercase mb-4 tracking-widest">{t.rules_finals}</h3>
-              <div className="flex justify-between mb-2"><span className="text-[10px] text-gray-300 uppercase font-bold">{t.rules_3rd}</span><span className="text-yellow-500 font-black">12 PTS</span></div>
-              <div className="flex justify-between"><span className="text-[10px] text-gray-300 uppercase font-bold">{t.rules_champion}</span><span className="text-yellow-500 font-black">20 PTS</span></div>
+              <div className="flex justify-between mb-2"><span className="text-[10px] text-gray-300 uppercase font-bold">{t.rules_3rd}</span><span className="text-yellow-500 font-black">12 {t.stats_pts || 'PTS'}</span></div>
+              <div className="flex justify-between"><span className="text-[10px] text-gray-300 uppercase font-bold">{t.rules_champion}</span><span className="text-yellow-500 font-black">20 {t.stats_pts || 'PTS'}</span></div>
            </div>
         </div>
 
