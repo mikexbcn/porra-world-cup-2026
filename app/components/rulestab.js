@@ -1,5 +1,21 @@
 // components/RulesTab.js
-export default function RulesTab({ t, perfil }) {
+export default function RulesTab({ t, perfil, lang }) {
+  
+  // Función para descargar el PDF correspondiente desde el Storage de Supabase
+  const handleDownloadPDF = () => {
+    // URL base pública de tu proyecto de Supabase apuntando al bucket 'manuals'
+    const supabaseStorageUrl = "https://vszmhsnpfsriedvevwmk.supabase.co/storage/v1/object/public/manuals";
+    
+    // Determinamos el archivo correcto según el estado 'lang' ('es', 'ca', 'en')
+    const pdfName = `manual-${lang || 'es'}.pdf`;
+    
+    // Creamos el enlace de descarga definitivo
+    const finalUrl = `${supabaseStorageUrl}/${pdfName}`;
+    
+    // Abrimos en pestaña nueva para iniciar la descarga nativa
+    window.open(finalUrl, '_blank');
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-8 pb-20 px-4">
       
@@ -21,8 +37,11 @@ export default function RulesTab({ t, perfil }) {
             {t.inst_title}
           </h3>
           
-          {/* BOTÓN PDF */}
-          <button className="text-[9px] font-black bg-white/10 hover:bg-white/20 text-gray-400 py-2 px-4 rounded-full transition-all border border-white/5 whitespace-nowrap">
+          {/* BOTÓN PDF CON ACCIÓN DE DESCARGA DIRECTA */}
+          <button 
+            onClick={handleDownloadPDF}
+            className="text-[9px] font-black bg-white/10 hover:bg-white/20 text-gray-400 py-2 px-4 rounded-full transition-all border border-white/5 whitespace-nowrap active:scale-95"
+          >
             PDF RULES ↓
           </button>
         </div>
