@@ -78,13 +78,17 @@ export default function AdminTab({ session, partidos, setPartidos, t, getFlag, j
     }
   }, [session])
 
-  // Seguridad estricta: Si no es el admin, no ve absolutamente nada
+// Seguridad estricta: Si no es el admin, no ve absolutamente nada (Internacionalizado)
   if (session?.user?.email !== ADMIN_EMAIL) {
     return (
       <div className="bg-red-950/20 border border-red-500/30 rounded-3xl p-8 text-center max-w-md mx-auto my-12">
-        <span className="text-3xl block mb-2">🚫</span>
-        <h3 className="text-sm font-black text-red-500 uppercase tracking-wider">Acceso Denegado</h3>
-        <p className="text-xs text-gray-400 mt-1">No tienes permisos de administrador.</p>
+        <span className="text-3xl block mb-2">❌</span>
+        <h3 className="text-sm font-black text-red-500 uppercase tracking-wider">
+          {t.admin_denied_title || 'Acceso Denegado'}
+        </h3>
+        <p className="text-xs text-gray-400 mt-1">
+          {t.admin_denied_desc || 'No tienes permisos de administrador.'}
+        </p>
       </div>
     )
   }
@@ -94,15 +98,14 @@ export default function AdminTab({ session, partidos, setPartidos, t, getFlag, j
 // Guardar el resultado y nombres de un partido individual
 
 const handleGuardarResultado = async (matchId) => {
-
   console.log('DEBUG:', matchId, partidos.find(p => p.id === matchId))
   
-    // Buscamos los nombres escritos en vivo directamente del estado actual del partido
-    const partidoEnVivo = partidos.find(p => p.id === matchId);
-    const homeTeam = partidoEnVivo?.home_team || '';
-    const awayTeam = partidoEnVivo?.away_team || '';
+  // Buscamos los nombres escritos en vivo directamente del estado actual del partido
+  const partidoEnVivo = partidos.find(p => p.id === matchId);
+  const homeTeam = partidoEnVivo?.home_team || '';
+  const awayTeam = partidoEnVivo?.away_team || '';
 
-    const score = resultados[matchId]
+  const score = resultados[matchId]
 
   // Vemos si el administrador ha marcado manualmente el checkbox de este partido
   const estaFinalizado = resultados[matchId]?.is_finished || false
@@ -112,7 +115,7 @@ const handleGuardarResultado = async (matchId) => {
 
   // Si marca "Finalizado" pero se le olvida poner los goles, le avisamos
   if (estaFinalizado && (!tieneHome || !tieneAway)) {
-    alert('Para marcar un partido como finalizado debes introducir ambos goles.')
+    alert(t.admin_alert_missing_scores || 'Para marcar un partido como finalizado debes introducir ambos goles.')
     return
   }
 
@@ -120,18 +123,17 @@ const handleGuardarResultado = async (matchId) => {
     setLoadingMatchId(matchId)
 
     // Si los campos de goles están completamente vacíos, los enviamos como null a la BD
-      const homeScoreValue = tieneHome ? parseInt(score.h, 10) : null
-      const awayScoreValue = tieneAway ? parseInt(score.a, 10) : null
+    const homeScoreValue = tieneHome ? parseInt(score.h, 10) : null
+    const awayScoreValue = tieneAway ? parseInt(score.a, 10) : null
 
-
-// Modificamos solo estas 2 líneas del objeto para que coja el texto que envías
-      const datosActualizar = {
-        home_team: homeTeam,
-        away_team: awayTeam,
-        home_score: homeScoreValue,
-        away_score: awayScoreValue,
-        is_finished: estaFinalizado
-      }
+    // Modificamos solo estas 2 líneas del objeto para que coja el texto que envías
+    const datosActualizar = {
+      home_team: homeTeam,
+      away_team: awayTeam,
+      home_score: homeScoreValue,
+      away_score: awayScoreValue,
+      is_finished: estaFinalizado
+    }
 
     // Actualizamos en Supabase
     const { error } = await supabase
@@ -143,11 +145,11 @@ const handleGuardarResultado = async (matchId) => {
 
     // Actualizar el estado local para que la interfaz se refresque en vivo
     setPartidos(prev => prev.map(m => m.id === matchId ? { ...m, ...datosActualizar } : m))
-    alert(`Partido ${homeTeam} vs ${awayTeam} actualizado correctamente.`)
+    alert(`${t.admin_alert_match || 'Partido'} ${homeTeam} vs ${awayTeam} ${t.admin_alert_updated_success || 'actualizado correctamente.'}`)
 
   } catch (err) {
     console.error('Error guardando resultado:', err)
-    alert('No se pudo guardar el resultado.')
+    alert(t.admin_alert_save_error || 'No se pudo guardar el resultado.')
   } finally {
     setLoadingMatchId(null)
   }
@@ -186,11 +188,11 @@ const handleGuardarResultado = async (matchId) => {
         })
         .eq('id', 1)
 
-      if (error) throw error
-      alert("Podio y Premios Extra oficiales actualizados correctamente.")
+    if (error) throw error
+      alert(t.admin_alert_extras_success || "Podio y Premios Extra oficiales actualizados correctamente.")
     } catch (err) {
       console.error("Error guardando extras:", err)
-      alert("Error al guardar: " + err.message)
+      alert((t.admin_alert_extras_error || "Error al guardar: ") + err.message)
     } finally {
       setGuardandoExtras(false)
     }
@@ -211,11 +213,11 @@ const handleGuardarResultado = async (matchId) => {
   // 3. Modificamos el filtrado para usar tu columna real
   const partidosFiltrados = partidos.filter(m => m.group_stage === filtroFase)
   
-  return (
+return (
     <div className="space-y-6 max-w-2xl mx-auto pb-20 animate-fade-in">
       <div className="bg-white/5 border border-white/10 rounded-3xl p-6 shadow-2xl">
         <h2 className="text-lg font-black text-red-500 italic uppercase mb-6 text-center tracking-widest flex items-center justify-center gap-2">
-          <span>⚙️</span> PANEL DE ADMINISTRADOR
+          <span>⚙️</span> {t.admin_panel_title || 'PANEL DE ADMINISTRADOR'}
         </h2>
 
         {/* Selector de Fase/Grupo para no saturar la pantalla */}
@@ -235,8 +237,12 @@ const handleGuardarResultado = async (matchId) => {
 
         {/* Lista de partidos de la fase seleccionada */}
         <div className="space-y-4">
+
+
           {partidosFiltrados.length === 0 ? (
-            <p className="text-xs text-center text-gray-500 py-4">No hay partidos cargados en esta fase.</p>
+            <p className="text-xs text-center text-gray-500 py-4">
+              {t.admin_no_matches || 'No hay partidos cargados en esta fase.'}
+            </p>
           ) : (
             partidosFiltrados.map((m) => {
               const mId = m.id
@@ -252,17 +258,18 @@ const handleGuardarResultado = async (matchId) => {
                       <span className="text-xs font-black uppercase tracking-wider">{m.home_team}</span>
                     ) : (
                       
-                     <div className="flex flex-col items-end gap-0.5">
-                        <input
+                <div className="flex flex-col items-end gap-0.5">
+                    <input
                           type="text"
                           value={m.home_team || ''}
                           onChange={(e) => {
                             const valor = e.target.value.toUpperCase();
                             setPartidos(prev => prev.map(p => p.id === mId ? { ...p, home_team: valor } : p));
-                          }}
-                          placeholder="CÓDIGO (Ej: 2A)"
+                        }}
+                          placeholder={t.admin_placeholder_code || "CÓDIGO (Ej: 2A)"}
                           className="bg-black/80 border border-white/10 px-2 py-1.5 rounded-xl text-xs font-black text-white w-28 text-right focus:outline-none focus:border-red-500 uppercase"
                         />
+
                         {m.home_team_ref && <span className="text-[9px] text-yellow-600 font-bold uppercase tracking-wider">ref: {m.home_team_ref}</span>}
                       </div>
 
@@ -298,17 +305,18 @@ const handleGuardarResultado = async (matchId) => {
                       <span className="text-xs font-black uppercase tracking-wider">{m.away_team}</span>
                     ) : (
                       
-                      <div className="flex flex-col items-start gap-0.5">
-                        <input
-                          type="text"
-                          value={m.away_team || ''}
-                          onChange={(e) => {
-                            const valor = e.target.value.toUpperCase();
-                            setPartidos(prev => prev.map(p => p.id === mId ? { ...p, away_team: valor } : p));
-                          }}
-                          placeholder="CÓDIGO (Ej: 2B)"
-                          className="bg-black/80 border border-white/10 px-2 py-1.5 rounded-xl text-xs font-black text-white w-28 text-left focus:outline-none focus:border-red-500 uppercase"
-                        />
+                     <div className="flex flex-col items-start gap-0.5">
+                      <input
+                      type="text"
+                      value={m.away_team || ''}
+                      onChange={(e) => {
+                      const valor = e.target.value.toUpperCase();
+                      setPartidos(prev => prev.map(p => p.id === mId ? { ...p, away_team: valor } : p));
+                      }}
+                      placeholder={t.admin_placeholder_code_away || "CÓDIGO (Ej: 2B)"}
+                      className="bg-black/80 border border-white/10 px-2 py-1.5 rounded-xl text-xs font-black text-white w-28 text-left focus:outline-none focus:border-red-500 uppercase"
+                      />
+
                         {m.away_team_ref && <span className="text-[9px] text-yellow-600 font-bold uppercase tracking-wider">ref: {m.away_team_ref}</span>}
                       </div>
 
@@ -331,12 +339,11 @@ const handleGuardarResultado = async (matchId) => {
                   className="w-4 h-4 accent-yellow-500 cursor-pointer rounded bg-black border-white/20"
                 />
                 <label htmlFor={`finished-${m.id}`} className="text-[10px] font-black tracking-wider text-gray-300 uppercase cursor-pointer select-none">
-                  PARTIDO FINALIZADO 🏁
-                </label>
+                  {t.admin_match_finished_label || 'PARTIDO FINALIZADO 🏁'}
+                </label>              
               </div>
 
-                  {/* Botón de Grabar */}
-                  {/* Botón de Grabar */}
+                {/* Botón de Grabar (Internacionalizado) */}
                   <button
                     onClick={() => handleGuardarResultado(mId)}
                     disabled={cargando}
@@ -346,7 +353,7 @@ const handleGuardarResultado = async (matchId) => {
                         : 'bg-red-600 hover:bg-red-500 text-white active:scale-95'
                     }`}
                   >
-                    {cargando ? '...' : 'GRABAR'}
+                    {cargando ? '...' : (t.admin_btn_save || 'GRABAR')}
                   </button>
 </div>
               )
@@ -354,65 +361,77 @@ const handleGuardarResultado = async (matchId) => {
           )}
         </div>
 
-        {/* --- NUEVO: SECCIÓN DE PODIO Y PREMIOS EXTRA OFICIALES --- */}
+        {/* --- NUEVO: SECCIÓN DE PODIO Y PREMIOS EXTRA OFICIALES (INTERNACIONALIZADO) --- */}
         <div className="mt-8 pt-8 border-t border-white/10 space-y-6">
           <h3 className="text-sm font-black text-yellow-500 italic uppercase tracking-widest text-center flex items-center justify-center gap-2">
-            🏅 PODIO Y PREMIOS EXTRA OFICIALES
+            🏅 {t.admin_podium_section_title || 'PODIO Y PREMIOS EXTRA OFICIALES'}
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* --- BLOQUE DEL PODIO --- */}
             <div className="bg-black/30 border border-white/5 p-4 rounded-2xl space-y-3">
-              <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-2 border-b border-white/5 pb-1">🏆 PODIO FINAL</p>
+              <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-2 border-b border-white/5 pb-1">
+                🏆 {t.admin_podium_title || 'PODIO FINAL'}
+              </p>
               
               <div className="space-y-2">
-                <label className="block text-[10px] font-bold text-gray-400 uppercase">Campeón del Mundo</label>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase">
+                  {t.podium_champion || 'Campeón del Mundo'}
+                </label>
                 <input
                   type="text"
                   value={extrasOficiales.champion}
                   onChange={(e) => setExtrasOficiales(prev => ({ ...prev, champion: e.target.value.toUpperCase() }))}
-                  placeholder="Ej: ARGENTINA"
+                  placeholder={t.admin_placeholder_eg_argentina || "Ej: ARGENTINA"}
                   className="w-full bg-black border border-white/10 px-3 py-2 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500 uppercase"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="block text-[10px] font-bold text-gray-400 uppercase">Subcampeón (Segundo)</label>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase">
+                  {t.podium_runner_up || 'Subcampeón (Segundo)'}
+                </label>
                 <input
                   type="text"
                   value={extrasOficiales.runner_up}
                   onChange={(e) => setExtrasOficiales(prev => ({ ...prev, runner_up: e.target.value.toUpperCase() }))}
-                  placeholder="Ej: FRANCIA"
+                  placeholder={t.admin_placeholder_eg_france || "Ej: FRANCIA"}
                   className="w-full bg-black border border-white/10 px-3 py-2 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500 uppercase"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="block text-[10px] font-bold text-gray-400 uppercase">Tercer Puesto</label>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase">
+                  {t.podium_third_place || 'Tercer Puesto'}
+                </label>
                 <input
                   type="text"
                   value={extrasOficiales.third_place}
                   onChange={(e) => setExtrasOficiales(prev => ({ ...prev, third_place: e.target.value.toUpperCase() }))}
-                  placeholder="Ej: CROACIA"
+                  placeholder={t.admin_placeholder_eg_croatia || "Ej: CROACIA"}
                   className="w-full bg-black border border-white/10 px-3 py-2 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500 uppercase"
                 />
               </div>
             </div>
 
-{/* --- BLOQUE DE PREMIOS EXTRA --- */}
+{/* --- BLOQUE DE PREMIOS EXTRA (INTERNACIONALIZADO) --- */}
             <div className="bg-black/30 border border-white/5 p-4 rounded-2xl space-y-3">
-              <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-2 border-b border-white/5 pb-1">✨ GALARDONES INDIVIDUALES</p>
+              <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-2 border-b border-white/5 pb-1">
+                ✨ {t.admin_individual_awards_title || 'GALARDONES INDIVIDUALES'}
+              </p>
               
               <div className="grid grid-cols-2 gap-2">
                 {/* Máximo Goleador */}
                 <div className="space-y-1">
-                  <label className="block text-[9px] font-bold text-gray-400 uppercase">Máximo Goleador</label>
+                  <label className="block text-[9px] font-bold text-gray-400 uppercase">
+                    {t.extra_pichichi || 'Máximo Goleador'}
+                  </label>
                   <select
                     value={extrasOficiales.top_scorer || ''}
                     onChange={(e) => setExtrasOficiales(prev => ({ ...prev, top_scorer: e.target.value }))}
                     className="w-full bg-black border border-white/10 px-2 py-1.5 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500 h-[32px]"
                   >
-                    <option value="">-- Pichichi --</option>
+                    <option value="">-- {t.admin_placeholder_pichichi || 'Pichichi'} --</option>
                     {(jugadores || []).map((jugador, idx) => {
                       const nombreFormateado = jugador?.name && jugador?.team ? `${jugador.name.toUpperCase()} (${jugador.team.toUpperCase()})` : (jugador?.name || jugador);
                       return (
@@ -422,15 +441,17 @@ const handleGuardarResultado = async (matchId) => {
                   </select>
                 </div>
 
-                {/* Mejor Portero */}
+                {/* Mejor Portero (Internacionalizado) */}
                 <div className="space-y-1">
-                  <label className="block text-[9px] font-bold text-gray-400 uppercase">Mejor Portero</label>
-                  <select
-                    value={extrasOficiales.best_keeper || ''}
-                    onChange={(e) => setExtrasOficiales(prev => ({ ...prev, best_keeper: e.target.value }))}
-                    className="w-full bg-black border border-white/10 px-2 py-1.5 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500 h-[32px]"
-                  >
-                    <option value="">-- Guante de Oro --</option>
+                <label className="block text-[9px] font-bold text-gray-400 uppercase">
+                {t.extra_zamora || 'Mejor Portero'}
+                </label>
+                <select
+                value={extrasOficiales.best_keeper || ''}
+                onChange={(e) => setExtrasOficiales(prev => ({ ...prev, best_keeper: e.target.value }))}
+                className="w-full bg-black border border-white/10 px-2 py-1.5 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500 h-[32px]"
+                >
+                <option value="">-- {t.admin_placeholder_keeper || 'Guante de Oro'} --</option>
                     {(jugadores || []).map((jugador, idx) => {
                       const nombreFormateado = jugador?.name && jugador?.team ? `${jugador.name.toUpperCase()} (${jugador.team.toUpperCase()})` : (jugador?.name || jugador);
                       return (
@@ -440,15 +461,17 @@ const handleGuardarResultado = async (matchId) => {
                   </select>
                 </div>
 
-                {/* Mejor Jugador */}
-                <div className="space-y-1">
-                  <label className="block text-[9px] font-bold text-gray-400 uppercase">Mejor Jugador</label>
+                  {/* Mejor Jugador (Internacionalizado) */}
+                  <div className="space-y-1">
+                  <label className="block text-[9px] font-bold text-gray-400 uppercase">
+                    {t.extra_mvp || 'Mejor Jugador'}
+                  </label>
                   <select
                     value={extrasOficiales.best_player || ''}
                     onChange={(e) => setExtrasOficiales(prev => ({ ...prev, best_player: e.target.value }))}
                     className="w-full bg-black border border-white/10 px-2 py-1.5 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500 h-[32px]"
                   >
-                    <option value="">-- MVP --</option>
+                  <option value="">-- {t.admin_placeholder_mvp || 'MVP'} --</option>
                     {(jugadores || []).map((jugador, idx) => {
                       const nombreFormateado = jugador?.name && jugador?.team ? `${jugador.name.toUpperCase()} (${jugador.team.toUpperCase()})` : (jugador?.name || jugador);
                       return (
@@ -458,15 +481,17 @@ const handleGuardarResultado = async (matchId) => {
                   </select>
                 </div>
 
-                {/* Mejor Joven */}
+                {/* Mejor Joven (Internacionalizado) */}
                 <div className="space-y-1">
-                  <label className="block text-[9px] font-bold text-gray-400 uppercase">Mejor Joven</label>
-                  <select
-                    value={extrasOficiales.best_young || ''}
-                    onChange={(e) => setExtrasOficiales(prev => ({ ...prev, best_young: e.target.value }))}
-                    className="w-full bg-black border border-white/10 px-2 py-1.5 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500 h-[32px]"
-                  >
-                    <option value="">-- Promesa --</option>
+                <label className="block text-[9px] font-bold text-gray-400 uppercase">
+                {t.extra_joven || 'Mejor Joven'}
+                </label>
+                <select
+                value={extrasOficiales.best_young || ''}
+                onChange={(e) => setExtrasOficiales(prev => ({ ...prev, best_young: e.target.value }))}
+                className="w-full bg-black border border-white/10 px-2 py-1.5 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500 h-[32px]"
+                >
+                <option value="">-- {t.admin_placeholder_young || 'Promesa'} --</option>
                     {(jugadores || []).map((jugador, idx) => {
                       const nombreFormateado = jugador?.name && jugador?.team ? `${jugador.name.toUpperCase()} (${jugador.team.toUpperCase()})` : (jugador?.name || jugador);
                       return (
@@ -477,34 +502,39 @@ const handleGuardarResultado = async (matchId) => {
                 </div>
               </div>
 
-              {/* Fair Play (Equipo) */}
-              <div className="space-y-1">
-                <label className="block text-[9px] font-bold text-gray-400 uppercase">Fair Play (Equipo)</label>
-                <input
-                  type="text"
-                  value={extrasOficiales.fair_play || ''}
-                  onChange={(e) => setExtrasOficiales(prev => ({ ...prev, fair_play: e.target.value.toUpperCase() }))}
-                  placeholder="Juego Limpio"
-                  className="w-full bg-black border border-white/10 px-3 py-1.5 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500 uppercase"
-                />
-              </div>
+          {/* Fair Play (Equipo) (Internacionalizado) */}
+            <div className="space-y-1">
+            <label className="block text-[9px] font-bold text-gray-400 uppercase">
+            {t.extra_fairplay || 'Fair Play (Equipo)'}
+            </label>
+            <input
+            type="text"
+            value={extrasOficiales.fair_play || ''}
+            onChange={(e) => setExtrasOficiales(prev => ({ ...prev, fair_play: e.target.value.toUpperCase() }))}
+            placeholder={t.admin_placeholder_fairplay || "Juego Limpio"}
+            className="w-full bg-black border border-white/10 px-3 py-1.5 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500 uppercase"
+            />
             </div>
-          </div>
+            </div>
+            </div>
 
-          {/* Botón único para guardar todo el bloque de extras */}
-          <div className="text-center pt-2">
+            {/* Botón único para guardar todo el bloque de extras (Internacionalizado) */}
+            <div className="text-center pt-2">
             <button
-              onClick={handleGuardarExtras}
-              disabled={guardandoExtras}
-              className={`w-full py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
-                guardandoExtras 
-                  ? 'bg-gray-800 text-gray-500 cursor-not-allowed' 
-                  : 'bg-yellow-500 hover:bg-yellow-400 text-black active:scale-[0.98] shadow-xl shadow-yellow-500/10'
-              }`}
+            onClick={handleGuardarExtras}
+            disabled={guardandoExtras}
+            className={`w-full py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
+            guardandoExtras 
+            ? 'bg-gray-800 text-gray-500 cursor-not-allowed' 
+            : 'bg-yellow-500 hover:bg-yellow-400 text-black active:scale-[0.98] shadow-xl shadow-yellow-500/10'
+            }`}
             >
-              {guardandoExtras ? 'GUARDANDO CAMBIOS...' : '💾 GUARDAR PREMIOS Y PODIO'}
+            {guardandoExtras 
+            ? (t.admin_btn_saving_extras || 'GUARDANDO CAMBIOS...') 
+            : `💾 ${t.admin_btn_save_extras || 'GUARDAR PREMIOS Y PODIO'}`}
             </button>
-          </div>
+            </div>
+
         </div>
 
       </div>
