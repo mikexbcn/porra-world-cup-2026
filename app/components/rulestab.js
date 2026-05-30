@@ -31,7 +31,7 @@ export default function RulesTab({ t, perfil, lang }) {
 
       {/* CAJA ÚNICA DE INSTRUCCIONES */}
       <div className="bg-white/5 border border-white/10 rounded-3xl p-8 shadow-xl text-left">
-        <div className="flex justify-between items-start mb-6 gap-4">
+        <div className="flex flex-col gap-4 mb-6">
           <h3 className="text-lg font-black text-white uppercase italic tracking-widest flex items-center gap-2">
             <span className="w-8 h-8 bg-yellow-500 text-black rounded-full flex items-center justify-center text-xs not-italic font-black">!</span>
             {t.inst_title}
@@ -40,9 +40,9 @@ export default function RulesTab({ t, perfil, lang }) {
           {/* BOTÓN PDF MULTIIDIOMA CON ACCIÓN DE DESCARGA DIRECTA */}
           <button 
             onClick={handleDownloadPDF}
-            className="text-[9px] font-black bg-white/10 hover:bg-white/20 text-gray-400 py-2 px-4 rounded-full transition-all border border-white/5 whitespace-nowrap active:scale-95"
+            className="w-full py-3 font-black text-[10px] bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 rounded-2xl transition-all border border-yellow-500/30 hover:border-yellow-500/60 uppercase tracking-widest active:scale-95"
           >
-            {t.btn_pdf_rules || 'PDF RULES ↓'}
+            📄 {t.btn_pdf_rules || 'PDF RULES'} ↓
           </button>
         </div>
 

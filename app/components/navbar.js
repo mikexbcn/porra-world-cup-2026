@@ -5,7 +5,6 @@ export default function Navbar({ t, tab, setTab }) {
   const menuItems = [
     { id: 'rules', label: t.nav_inicio },
     { id: 'matches', label: t.nav_pronosticos },
-    { id: 'extras', label: t.nav_extras || 'EXTRAS' },
     { id: 'results', label: t.nav_resultados },
     { id: 'ranking', label: t.nav_ranking },
     { id: 'bets', label: t.nav_apuestas }

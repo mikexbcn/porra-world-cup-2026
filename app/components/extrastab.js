@@ -107,6 +107,10 @@ if (error) throw error;
 
   // Listas filtradas dinámicamente
   const soloPorteros = jugadores.filter(j => j.position === 'GK');
+  const soloJovenes = jugadores.filter(j => {
+  if (!j.birth_date) return true; // Si no tiene fecha, lo incluimos por si acaso
+  return new Date(j.birth_date) >= new Date('2003-06-11');
+});
   
   // Extraemos las selecciones únicas para el Fair Play
   const listaSelecciones = Array.from(new Set(jugadores.map(j => j.team))).sort();
@@ -116,7 +120,7 @@ if (error) throw error;
     { id: 'best_player', label: t.extra_mvp, listId: 'list-todos' },
     { id: 'top_scorer', label: t.extra_pichichi, listId: 'list-todos' },
     { id: 'best_keeper', label: t.extra_gk, listId: 'list-porteros' },
-    { id: 'best_young', label: t.extra_young, listId: 'list-todos' },
+    { id: 'best_young', label: t.extra_young, listId: 'list-jovenes' },
     { id: 'fair_play', label: t.extra_fairplay, listId: 'list-selecciones' },
   ];
 
@@ -161,7 +165,14 @@ if (error) throw error;
           ))}
         </datalist>
 
-        {/* 3. Lista de selecciones nacionales únicos */}
+        {/* 3. Lista exclusiva de jugadores jóvenes (sub-23) */}
+        <datalist id="list-jovenes">
+          {soloJovenes.map((j) => (
+            <option key={j.id} value={`${j.name} (${j.team})`} />
+          ))}
+        </datalist>
+
+        {/* 4. Lista de selecciones nacionales únicos */}
         <datalist id="list-selecciones">
           {listaSelecciones.map((team) => (
             <option key={team} value={team} />
