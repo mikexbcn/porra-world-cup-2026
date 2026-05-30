@@ -346,7 +346,7 @@ return (
             <thead>
               <tr className="border-b border-white/10 bg-white/5 text-[10px] font-black uppercase text-gray-400 tracking-wider">
                 <th className="p-4 text-center w-16">{t.ranking_pos || 'POS'}</th>
-                <th className="p-4" colSpan="2">{t.ranking_user || 'USUARIO'}</th>
+                <th className="p-4">{t.ranking_user || 'USUARIO'}</th>
                 <th className="p-4 text-right w-24">{t.stats_pts || 'PUNTOS'}</th>
                 <th className="p-4 text-right w-16 text-gray-500">-LDR</th>
               </tr>
@@ -361,19 +361,7 @@ return (
                     <td className="p-4 text-center font-black text-xs text-gray-400">
                       {esTop3 ? <span className="text-base">{medallas[index]}</span> : index + 1}
                     </td>
-                    <td className="p-4 w-10">
-                      {(() => {
-                        const colors = ['#e63946','#2a9d8f','#e9c46a','#f4a261','#457b9d','#8338ec','#fb5607','#06d6a0'];
-                        const color = colors[u.username.charCodeAt(0) % colors.length];
-                        const initials = u.username.slice(0,2).toUpperCase();
-                        return (
-                          <div style={{ backgroundColor: color }} className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-[11px] font-black text-white">{initials}</span>
-                          </div>
-                        );
-                      })()}
-                    </td>
-                  <td className="p-4 uppercase text-xs tracking-wide text-white">
+                    <td className="p-4 uppercase text-xs tracking-wide text-white">
                     {u.username}
                   </td>
                     <td className="p-4 text-right font-black text-yellow-500 text-sm">
