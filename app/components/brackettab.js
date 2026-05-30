@@ -237,7 +237,7 @@ const handleEleccion = async (partidoId, lado, equipoNombre) => {
 
       if (error) {
         console.error("❌ ERROR SUPABASE:", error.message);
-        alert("Error al guardar: " + error.message);
+        alert(t.bracket_save_error + error.message);
       } else {
         console.log("✅ GUARDADO OK:", nuevaClave, "->", equipoNombre);
       }
@@ -570,22 +570,22 @@ const handleEleccion = async (partidoId, lado, equipoNombre) => {
 <div className="mt-16">
   <p className="text-[9px] text-gray-500 text-center uppercase font-bold mb-4 italic tracking-widest">
     {isLockedFinal 
-      ? "Tu apuesta ya está guardada y sellada a fuego" 
-      : (t.confirmDesc || "Al confirmar, tu apuesta quedará bloqueada para el resto del Mundial")}
+          ? t.bracket_locked_desc
+          : t.confirmDesc}
   </p>
   <button 
     disabled={isLockedFinal}
     onClick={() => {
       // 1. PREGUNTA DE SEGURIDAD ESTÉTICA CON SWEETALERT2
       Swal.fire({
-        title: '¿Estás completamente seguro?',
-        text: "Una vez confirmada, tu apuesta quedará bloqueada y no podrás realizar más cambios.",
+        title: t.bracket_confirm_title,
+        text: t.bracket_confirm_text,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#eab308', // Amarillo de tu botón
+        confirmButtonColor: '#eab308',
         cancelButtonColor: '#374151',
-        confirmButtonText: 'SÍ, CERRAR APUESTA 🔒',
-        cancelButtonText: 'CANCELAR',
+        confirmButtonText: t.bracket_confirm_btn,
+        cancelButtonText: t.bracket_cancel_btn,
         customClass: {
           popup: 'rounded-2xl' // Mantiene la estética redondeada de tus botones
         }
@@ -617,8 +617,8 @@ const handleEleccion = async (partidoId, lado, equipoNombre) => {
             // Alerta estética de éxito
             await Swal.fire({
               icon: 'success',
-              title: '¡Apuesta cerrada!',
-              text: 'Tu apuesta mundial ha sido bloqueada con éxito. 🔒',
+              title: t.bracket_success_title,
+              text: t.bracket_success_text,
               confirmButtonColor: '#eab308'
             });
 
@@ -629,8 +629,8 @@ const handleEleccion = async (partidoId, lado, equipoNombre) => {
             console.error("Error en el cierre:", err);
             Swal.fire({
               icon: 'error',
-              title: 'No se pudo cerrar',
-              text: "Hubo un error: " + err.message,
+              title: t.bracket_error_title,
+              text: t.bracket_error_text + err.message,  
               confirmButtonColor: '#eab308'
             });
           }
@@ -643,8 +643,8 @@ const handleEleccion = async (partidoId, lado, equipoNombre) => {
         : "bg-yellow-500 hover:bg-yellow-400 text-black shadow-[0_10px_30px_rgba(234,179,8,0.2)] active:scale-95"
     }`}
   >
-    {isLockedFinal ? "APUESTA MUNDIAL BLOQUEADA 🔒" : (t.confirmAll || 'Cerrar Apuesta Mundial 🔒')}
-  </button>
+    {isLockedFinal ? t.bracket_locked_btn : t.confirmAll}
+    </button>
 </div>
 
   </div>
