@@ -5,7 +5,7 @@ import { recalcularClasificacion } from './utils'
 // He eliminado validarToken de aquí para que use la de authLogic.js
 // que es la que tiene la conexión real a la base de datos.
 
-export const handleRegister = async (email, password, username, setSession, setLoading) => {
+export const handleRegister = async (email, password, username, setSession, setLoading, t) => {
   setLoading(true);
   try {
     const { data, error } = await supabase.auth.signUp({ email, password });

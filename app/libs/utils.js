@@ -1,4 +1,3 @@
-
 // app/libs/utils.js
  
 export function recalcularClasificacion(matches, predicts, setTablas) {

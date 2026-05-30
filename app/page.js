@@ -189,11 +189,11 @@ if (pr) {
         bgImages={bgImages} t={t} lang={lang} setLang={setLang}
         accessStep={accessStep} setAccessStep={setAccessStep}
         vipCode={vipCode} setVipCode={setVipCode} 
-        validarToken={() => validarToken(vipCode, setLoading, setAccessStep)}
+        validarToken={() => validarToken(vipCode, setLoading, setAccessStep, t)}
         username={username} setUsername={setUsername}
         email={email} setEmail={setEmail}
         password={password} setPassword={setPassword}
-        handleRegister={() => handleRegister(email, password, username, setSession, setLoading)}
+        handleRegister={() => handleRegister(email, password, username, setSession, setLoading, t)}
         handleLogin={() => handleLogin(email, password, setSession, setLoading)}
       />
     );
@@ -245,7 +245,7 @@ return (
                 : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'
             }`}
           >
-            ⚙️ PANEL ADMIN
+            ⚙️ {t.panel_admin || 'PANEL ADMIN'}
           </button>
         </div>
       )}

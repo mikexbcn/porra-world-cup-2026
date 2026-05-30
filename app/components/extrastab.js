@@ -28,8 +28,8 @@ export default function ExtrasTab({ t, extras, setExtras, session, setLoading, j
         if (session?.user?.email === 'demo@mundial.com') {
           Swal.fire({
             icon: 'info',
-            title: 'Modo DEMO',
-            text: 'No tienes permisos para modificar los premios extras.',
+            title: t.matches_demo,
+            text: t.extras_demo_text,
             confirmButtonColor: '#eab308',
             customClass: { popup: 'rounded-2xl' }
           });
@@ -84,8 +84,8 @@ if (error) throw error;
 
       Swal.fire({
       icon: 'success',
-      title: '¡Sincronizado!',
-      text: 'Tus pronósticos extras han sido guardados correctamente. 🏆',
+      title: t.extras_saved_title,
+      text: t.extras_saved_text,
       confirmButtonColor: '#10b981', // Color verde esmeralda a juego con tu botón de éxito
       customClass: { popup: 'rounded-2xl' }
       });
@@ -95,8 +95,8 @@ if (error) throw error;
       console.error("Error guardando extras:", err);
       Swal.fire({
       icon: 'error',
-      title: 'Fallo al guardar',
-      text: 'No se pudieron registrar tus premios: ' + err.message,
+      title: t.extras_error_title,
+      text: t.extras_error_text + err.message,
       confirmButtonColor: '#ef4444',
       customClass: { popup: 'rounded-2xl' }
     });
@@ -186,13 +186,13 @@ if (error) throw error;
               }`}
         >
           {session?.user?.email === 'demo@mundial.com' ? (
-            <>🔒 MODO LECTURA</>
+            <>{t.matches_readonly_btn}</>
           ) : sinCambios && (extras.top_scorer || extras.best_player || extras.best_keeper) ? (
             <>
-              <span className="text-sm">🔒</span> {t.nav_extras_saved || 'PRONÓSTICOS GUARDADOS'}
+              <span className="text-sm">🔒</span> {t.extras_saved_btn}
             </>
           ) : (
-            <>⚽ GUARDAR PREMIOS EXTRAS</>
+            <>{t.extras_save_btn}</>
           )}
         </button>
 
