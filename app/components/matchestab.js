@@ -413,8 +413,6 @@ placeholder="-"
       ) : (
 
         <div className="animate-fade-in pb-20">
-          {/* Ponemos el log aquí dentro para inspeccionar el valor real al vuelo */}
-          {console.log("=== JUGADORES EN MATCHESTAB ===", jugadores)}
           <ExtrasTab 
             t={t} 
             extras={extras} 

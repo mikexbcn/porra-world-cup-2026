@@ -56,6 +56,14 @@ export default function Home() {
     gruposBloqueados['GROUP I'] && gruposBloqueados['GROUP J'] && 
     gruposBloqueados['GROUP K'] && gruposBloqueados['GROUP L'];
 
+
+useEffect(() => {
+    const registrarVisita = async () => {
+    await supabase.rpc('incrementar_visitas');
+      };
+    registrarVisita();
+      }, []);
+
 useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -167,8 +175,7 @@ if (pr) {
         .select('*')
         .order('name', { ascending: true });
       
-      // Log limpio para ver qué nos devuelve Supabase sin romper el hilo
-      console.log("=== DATA SUPABASE ===", pl);
+      
       if (errorJugadores) console.error("=== ERROR SUPABASE JUGADORES ===", errorJugadores);
       
       setJugadores(pl || []);

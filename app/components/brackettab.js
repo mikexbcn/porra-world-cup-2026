@@ -183,9 +183,6 @@ export default function BracketTab({ tablas, getFlag, session, t, apuestasGuarda
   // El candado definitivo que viene desde el componente Padre
   const isLockedFinal = isLockedProfile === true;
   
-  // AÑADE ESTA LÍNEA DE CONTROL AQUÍ:
-  console.log("¿ESTÁ BLOQUEADO REALMENTE?:", isLockedFinal, "DATOS RECIBIDOS:", apuestasGuardadas);
-  
   // 1. ESTADO DE LAS APUESTAS
   const [apuestas, setApuestas] = useState({});
   // Este efecto "escucha" cuando llegan los datos de la base de datos y los pone en el cuadro
@@ -211,8 +208,6 @@ export default function BracketTab({ tablas, getFlag, session, t, apuestasGuarda
   const tercerosAsignadosMap = getAsignacionTerceros(tablas);
   const mejoresTerceros = getMejoresTerceros(tablas);
   
-  console.log("DEBUG - Tablas recibidas:", tablas);
-
 const handleEleccion = async (partidoId, lado, equipoNombre) => {
     // 1. EL CANDADO DEBE IR AQUÍ (PRIMERA LÍNEA)
     if (isLockedFinal) return; 

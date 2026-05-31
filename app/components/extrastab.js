@@ -5,9 +5,6 @@ import Swal from 'sweetalert2';
 
 export default function ExtrasTab({ t, extras, setExtras, session, setLoading, jugadores = [], setGruposBloqueados }) {
 
-  console.log("=== JUGADORES EN EXTRAS ===", jugadores);
-
-// Copia y pega este bloque justo debajo del console.log:
   const [extrasIniciales, setExtrasIniciales] = useState({});
 
   useEffect(() => {

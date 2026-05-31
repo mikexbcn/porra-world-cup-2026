@@ -26,6 +26,7 @@ export default function AdminTab({ session, partidos, setPartidos, t, getFlag, j
     fair_play: '', best_young: ''
   })
   const [guardandoExtras, setGuardandoExtras] = useState(false)
+  const [totalVisitas, setTotalVisitas] = useState(null)
 
   // Tu email de administrador para proteger el panel
   const ADMIN_EMAIL = 'mikemulderx@gmail.com' // <-- CAMBIA ESTO POR TU EMAIL REAL
@@ -72,11 +73,19 @@ export default function AdminTab({ session, partidos, setPartidos, t, getFlag, j
       } catch (err) {
         console.error("Error cargando extras oficiales:", err)
       }
-    }
+    }    
     if (session?.user?.email === ADMIN_EMAIL) {
-      cargarExtrasOficiales()
-    }
-  }, [session])
+    cargarExtrasOficiales();
+    supabase
+      .from('visit_counter')
+      .select('total_visits, last_visit')
+      .eq('id', 1)
+      .single()
+      .then(({ data }) => {
+        if (data !== null) setTotalVisitas(data);
+      });
+    }  
+   }, [session])
 
 // Seguridad estricta: Si no es el admin, no ve absolutamente nada (Internacionalizado)
   if (session?.user?.email !== ADMIN_EMAIL) {
@@ -98,8 +107,7 @@ export default function AdminTab({ session, partidos, setPartidos, t, getFlag, j
 // Guardar el resultado y nombres de un partido individual
 
 const handleGuardarResultado = async (matchId) => {
-  console.log('DEBUG:', matchId, partidos.find(p => p.id === matchId))
-  
+    
   // Buscamos los nombres escritos en vivo directamente del estado actual del partido
   const partidoEnVivo = partidos.find(p => p.id === matchId);
   const homeTeam = partidoEnVivo?.home_team || '';
@@ -219,6 +227,16 @@ return (
         <h2 className="text-lg font-black text-red-500 italic uppercase mb-6 text-center tracking-widest flex items-center justify-center gap-2">
           <span>⚙️</span> {t.admin_panel_title || 'PANEL DE ADMINISTRADOR'}
         </h2>
+
+          {totalVisitas && (
+            <div className="bg-black/40 border border-yellow-500/20 rounded-2xl p-4 mb-6 text-center">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">👁 Visitas totales</p>
+              <p className="text-3xl font-black text-yellow-500">{totalVisitas.total_visits}</p>
+              <p className="text-[10px] text-gray-500 mt-1">
+                Última visita: {new Date(totalVisitas.last_visit).toLocaleString('es-ES')}
+              </p>
+            </div>
+          )}
 
         {/* Selector de Fase/Grupo para no saturar la pantalla */}
         <div className="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-white/5 scrollbar-none">

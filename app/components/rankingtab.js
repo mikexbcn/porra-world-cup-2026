@@ -70,8 +70,6 @@ export default function RankingTab({ partidos, t, tablas: tablasOficiales }) {
         } 
         })
 
-        console.log('ROUND 32 reales completo:', Array.from(equiposRealesRound32))
-
         // ── FASES ROUND 16 EN ADELANTE (desde matches) ──
         const equiposRealesEnFase = {
           "ROUND 16": new Set(),
@@ -144,8 +142,6 @@ export default function RankingTab({ partidos, t, tablas: tablasOficiales }) {
               tablasUsuario[grupo] = Object.values(eq).sort((a, b) => b.pts !== a.pts ? b.pts - a.pts : b.gd !== a.gd ? b.gd - a.gd : (b.gf||0) !== (a.gf||0) ? (b.gf||0) - (a.gf||0) : a.nombre.localeCompare(b.nombre))
           })
 
-          console.log('[' + user.username + '] GROUP C:', tablasUsuario['GROUP C']?.map(e => e.nombre + ' pts:' + e.pts + ' gd:' + e.gd + ' gf:' + e.gf))
-
           // Equipos del usuario en ROUND 32 (1º y 2º de cada grupo + 8 mejores terceros)
           const equiposUsuarioRound32 = new Set()
           grupos.forEach(letra => {
@@ -163,7 +159,6 @@ export default function RankingTab({ partidos, t, tablas: tablasOficiales }) {
 
 const tercerosOrdenados = getMejoresTerceros(tablasUsuario)
 
-          console.log('[' + user.username + '] terceros:', tercerosOrdenados.map(e => e.nombre + ' pts:' + e.pts + ' gd:' + e.gd + ' gf:' + e.gf))
           tercerosOrdenados
             .slice(0, 8)
             .forEach(e => equiposUsuarioRound32.add(e.nombre.toUpperCase().trim()))
@@ -189,9 +184,6 @@ console.log('[' + user.username + '] tras grupos:', puntosTotales)
 
           equiposUsuarioRound32.forEach(equipoUsuario => {
             const coincide = clasificadosFinales["ROUND 32"].includes(equipoUsuario)
-            if (user.username === 'Messi' || user.username === 'messi') {
-              console.log('R32 check:', equipoUsuario, '→', coincide)
-            }
 
 console.log('[' + user.username + '] tras R32:', puntosTotales)
 
@@ -288,8 +280,6 @@ if (user.username === 'Messi' || user.username === 'messi') {
             }
           })
 
-console.log('[' + user.username + '] tras bracket:', puntosTotales)
-
           // ── PREMIOS EXTRA ──
           try {
             if (todasLasPrediccionesExtras && resultadosExtrasOficiales) {
@@ -306,10 +296,6 @@ console.log('[' + user.username + '] tras bracket:', puntosTotales)
           } catch (errExtra) {
             console.error("Error calculando extras:", errExtra)
           }
-
-          if (true) {
-          console.log('[' + user.username + '] PUNTOS TOTALES:', puntosTotales)
-                      }
 
           return {
             username: user.username || 'Usuario Anónimo',

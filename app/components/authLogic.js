@@ -3,7 +3,6 @@ import { supabase } from '../../supabaseClient'
 
 export const validarToken = async (vipCode, setLoading, setAccessStep, t) => {
   const code = vipCode.trim().toUpperCase();
-  console.log("Intentando validar código:", code); 
   setLoading(true);
 
   if (code === 'MESSITEST'){ 
@@ -48,7 +47,6 @@ export const validarToken = async (vipCode, setLoading, setAccessStep, t) => {
       }
     } else {
       // Token válido y marcado como usado en una sola operación
-      console.log("¡Token válido y marcado como usado!");
       setAccessStep('register');
     }
 
