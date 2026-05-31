@@ -151,6 +151,8 @@ export const translations = {
     bracket_locked_desc: "Tu apuesta ya está guardada y sellada",
     bracket_locked_btn: "APUESTA MUNDIAL BLOQUEADA 🔒",
     confirmDesc: "Al confirmar, tu apuesta quedará bloqueada para el resto del Mundial",
+    ranking_bote_title: "Bote total",
+    ranking_bote_jugadores: "jugadores × 10€",
   },
   ca: { 
     title: "MUNDIAL", predictions: "Partits", honor: "Premis", logout: "Sortir", save: "Confirmar 🔒", saveExtras: "Guardar 🏆", vip: "INTRODUEIX EL TEU TOKEN", loginBtn: "Entrar", signupBtn: "Crear Compte", email: "Correu", pass: "Contrasenya", user: "Usuari", welcome: "Hola!", already: "Ja tens compte?", useToken: "Tinc un Token", ranking: "Rànquing", tableTitle: "Posicions", validate: "Validar Token", loginLink: "Entrar", backToken: "Tornar al Token", loading: "CARREGANT...",
@@ -303,6 +305,8 @@ export const translations = {
     bracket_locked_desc: "La teva aposta ja està desada i segellada",
     bracket_locked_btn: "APOSTA MUNDIAL BLOQUEJADA 🔒",
     confirmDesc: "En confirmar, la teva aposta quedarà bloquejada per a la resta del Mundial",
+    ranking_bote_title: "Bossa total",
+    ranking_bote_jugadores: "jugadors × 10€",
   },
   en: { 
     title: "WORLD CUP", predictions: "Matches", honor: "Prizes", logout: "Logout", save: "Confirm 🔒", saveExtras: "Save 🏆", vip: "ENTER YOUR TOKEN", loginBtn: "Login", signupBtn: "Sign Up", email: "Email", pass: "Password", user: "Username", welcome: "Hi!", already: "Have an account?", useToken: "Use Token", ranking: "Ranking", tableTitle: "Standings", validate: "Validate Token", loginLink: "Login", backToken: "Back to Token", loading: "LOADING...",
@@ -455,5 +459,7 @@ export const translations = {
     bracket_locked_desc: "Your bet is already saved and sealed",
     bracket_locked_btn: "WORLD CUP BET LOCKED 🔒",
     confirmDesc: "Once confirmed, your bet will be locked for the rest of the World Cup",
+    ranking_bote_title: "Total prize pool",
+    ranking_bote_jugadores: "players × 10€",
   }
 };

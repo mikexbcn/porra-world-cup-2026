@@ -7,7 +7,8 @@ import { getMejoresTerceros } from '../libs/utils'
 export default function RankingTab({ partidos, t, tablas: tablasOficiales }) {
   const [clasificacion, setClasificacion] = useState([])
   const [loading, setLoading] = useState(true)
-
+  const [infoBote, setInfoBote] = useState({ numJugadores: 0, bote: 0 })
+  
   useEffect(() => {
     async function obtenerRanking() {
       try {
@@ -306,6 +307,12 @@ if (user.username === 'Messi' || user.username === 'messi') {
         listaCalculada.sort((a, b) => b.puntos - a.puntos)
         setClasificacion(listaCalculada)
 
+        // Calcular bote excluyendo usuario DEMO
+        const jugadoresReales = usuarios.filter(u => u.username?.toUpperCase() !== 'DEMO')
+        const numJugadores = jugadoresReales.length
+        const bote = numJugadores * 10
+        setInfoBote({ numJugadores, bote })
+
       } catch (err) {
         console.error("Error generando el ranking:", err)
       } finally {
@@ -326,6 +333,46 @@ return (
         <h2 className="text-xl font-black text-yellow-500 italic uppercase mb-6 text-center tracking-widest">
           🏆 {t.ranking_title || 'CLASIFICACIÓN GENERAL'}
         </h2>
+
+      {/* BOTE DE LA PORRA */}
+      {(() => {
+        const { numJugadores, bote } = infoBote;
+        let premios = [];
+        if (numJugadores >= 40) {
+          premios = [
+            { pos: '🥇', pct: 60, euros: Math.round(bote * 0.60) },
+            { pos: '🥈', pct: 25, euros: Math.round(bote * 0.25) },
+            { pos: '🥉', pct: 15, euros: Math.round(bote * 0.15) },
+          ];
+        } else if (numJugadores >= 30) {
+          premios = [
+            { pos: '🥇', pct: 65, euros: Math.round(bote * 0.65) },
+            { pos: '🥈', pct: 35, euros: Math.round(bote * 0.35) },
+          ];
+        } else {
+          premios = [
+            { pos: '🥇', pct: 100, euros: bote },
+          ];
+        }
+        return (
+          <div className="bg-black/40 border border-yellow-500/20 rounded-2xl p-5 mb-6">
+            <div className="text-center mb-4">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">💰 {t.ranking_bote_title}</p>
+              <p className="text-4xl font-black text-yellow-500">{bote}€</p>
+              <p className="text-[10px] text-gray-500 mt-1">{numJugadores} {t.ranking_bote_jugadores}</p>
+            </div>
+            <div className="flex gap-3 justify-center flex-wrap">
+              {premios.map((p, i) => (
+                <div key={i} className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center min-w-[80px]">
+                  <span className="text-xl block">{p.pos}</span>
+                  <span className="text-yellow-500 font-black text-sm block">{p.euros}€</span>
+                  <span className="text-[9px] text-gray-500 font-black">{p.pct}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
         <div className="overflow-hidden rounded-2xl border border-white/5 bg-black/30">
           <table className="w-full text-left border-collapse">
