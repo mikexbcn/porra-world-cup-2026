@@ -22,11 +22,11 @@ export const getFlag = (team) => {
     "GERMANY": "de", "CURAÇAO": "cw", "IVORY COAST": "ci", "ECUADOR": "ec", 
     "NETHERLANDS": "nl", "JAPAN": "jp", "SWEDEN": "se", "TUNISIA": "tn", 
     "BELGIUM": "be", "EGYPT": "eg", "IRAN": "ir", "NEW ZEALAND": "nz", 
-    "SPAIN": "es", "CABO VERDE": "cv", "SAUDI ARABIA": "sa", "URUGUAY": "uy", 
+    "SPAIN": "es", "CAPE VERDE": "cv", "SAUDI ARABIA": "sa", "URUGUAY": "uy", 
     "FRANCE": "fr", "SENEGAL": "sn", "IRAQ": "iq", "NORWAY": "no", 
     "ARGENTINA": "ar", "ALGERIA": "dz", "AUSTRIA": "at", "JORDAN": "jo", 
     "PORTUGAL": "pt", "CONGO DR": "cd", "UZBEKISTAN": "uz", "COLOMBIA": "co", 
-    "ENGLAND": "gb-eng", "CROATIA": "hr", "GHANA": "gh", "PANAMA": "pa"
+    "ENGLAND": "gb-eng", "CROATIA": "hr", "GHANA": "gh", "PANAMA": "pa"    
   };
 
   const key = team.toUpperCase();
