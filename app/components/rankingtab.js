@@ -16,8 +16,9 @@ export default function RankingTab({ partidos, t, tablas: tablasOficiales }) {
         
         // 1. Traer todos los perfiles con su username
         const { data: usuarios, error: errUsers } = await supabase
-          .from('profiles')
-          .select('id, username')
+        .from('profiles')
+        .select('id, username')
+        .neq('username', 'DEMO')
         if (errUsers) throw errUsers
 
         // 2. Traer todas las predicciones
