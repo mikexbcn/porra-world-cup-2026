@@ -155,23 +155,48 @@ const handleSaveMatches = async () => {
       </div>
 
 {/* TABLA DE POSICIONES */}
-      {activePhase.includes('GROUP') && tablas[activePhase] && (
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mb-8">
-          <h3 className="text-[10px] font-black text-yellow-500 uppercase mb-4 text-center">{t.matches_standings} {activePhase}</h3>
-          {tablas[activePhase].map(eq => (
-            <div key={eq.nombre} className="flex justify-between items-center py-2 border-b border-white/5">
-              <div className="flex items-center gap-3">
-                <img src={getFlag(eq.nombre)} className="w-5 h-3" alt="" />
-                <span className="text-[10px] font-black uppercase">{eq.nombre}</span>
-              </div>
-              <div className="flex gap-4">
-                <span className="text-[10px] text-gray-600 font-mono">{eq.pj} {t.stats_pj || 'PJ'}</span>
-                <span className="text-yellow-500 font-black text-[11px]">{eq.pts} {t.stats_pts || 'PTS'}</span>
-              </div>
-            </div>
-          ))}
+{activePhase.includes('GROUP') && tablas[activePhase] && (
+  <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mb-8">
+    <h3 className="text-[10px] font-black text-yellow-500 uppercase mb-4 text-center">{t.matches_standings} {activePhase}</h3>
+    
+    {/* CABECERA */}
+    <div className="flex justify-between items-center py-2 border-b border-white/10 mb-1">
+      <span className="text-[9px] text-gray-500 uppercase font-black w-40">{t.standings_team}</span>     
+      <div className="flex gap-3 text-[9px] text-gray-500 font-black uppercase">
+        <span className="w-5 text-center">{t.standings_pj}</span>
+        <span className="w-5 text-center">{t.standings_gf}</span>
+        <span className="w-5 text-center">{t.standings_gc}</span>
+        <span className="w-5 text-center">{t.standings_dg}</span>
+        <span className="w-8 text-center text-yellow-500">{t.standings_pts}</span>
+      </div>
+    </div>
+
+    {/* FILAS */}
+    {tablas[activePhase].map((eq, index) => (
+      <div key={eq.nombre} className={`flex justify-between items-center py-2 border-b border-white/5 ${index < 2 ? 'border-l-2 border-l-green-500/40 pl-2' : index === 2 ? 'border-l-2 border-l-yellow-500/40 pl-2' : 'pl-3'}`}>
+        <div className="flex items-center gap-2 w-40">
+          <span className="text-[9px] text-gray-500 font-black w-3">{index + 1}</span>
+          <img src={getFlag(eq.nombre)} className="w-5 h-3" alt="" />
+          <span className="text-[9px] font-black uppercase truncate">{eq.nombre}</span>
         </div>
-      )}
+        <div className="flex gap-3 text-[9px] font-mono">
+          <span className="w-5 text-center text-gray-400">{eq.pj}</span>
+          <span className="w-5 text-center text-gray-400">{eq.gf || 0}</span>
+          <span className="w-5 text-center text-gray-400">{(eq.gf || 0) - (eq.gd || 0)}</span>
+          <span className="w-5 text-center text-gray-300">{eq.gd > 0 ? '+' : ''}{eq.gd || 0}</span>
+          <span className="w-8 text-center text-yellow-500 font-black">{eq.pts}</span>
+        </div>
+      </div>
+    ))}
+
+    {/* LEYENDA */}
+    <div className="flex gap-4 mt-3">
+      
+      <div className="flex items-center gap-1"><span className="w-2 h-2 bg-green-500/40 rounded-sm inline-block"></span><span className="text-[8px] text-gray-500">{t.standings_classified}</span></div>
+      <div className="flex items-center gap-1"><span className="w-2 h-2 bg-yellow-500/40 rounded-sm inline-block"></span><span className="text-[8px] text-gray-500">{t.standings_third}</span></div>
+    </div>
+  </div>
+)}
 
 {/* LISTA DE PARTIDOS */}
       {activePhase !== 'EXTRAS' ? (
