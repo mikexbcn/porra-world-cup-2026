@@ -6,6 +6,8 @@ import Swal from 'sweetalert2';
 export default function ExtrasTab({ t, extras, setExtras, session, setLoading, jugadores = [], setGruposBloqueados }) {
 
   const [extrasIniciales, setExtrasIniciales] = useState({});
+  const [busqueda, setBusqueda] = useState({});
+  const [inputActivo, setInputActivo] = useState(null);
 
   useEffect(() => {
     if (extras && Object.keys(extrasIniciales).length === 0) {
@@ -111,6 +113,21 @@ if (error) throw error;
   
   // Extraemos las selecciones únicas para el Fair Play
   const listaSelecciones = Array.from(new Set(jugadores.map(j => j.team))).sort();
+  
+  const getSugerencias = (listId, texto) => {
+  if (!texto || texto.length < 2) return [];
+ 
+  const textoUp = texto.toUpperCase();
+  let lista = [];
+  if (listId === 'list-todos') lista = jugadores;
+  else if (listId === 'list-porteros') lista = soloPorteros;
+  else if (listId === 'list-jovenes') lista = soloJovenes;
+  else if (listId === 'list-selecciones') return listaSelecciones.filter(t => t.toUpperCase().includes(textoUp)).slice(0, 8);
+  return lista
+    .filter(j => j.name.toUpperCase().includes(textoUp) || j.team.toUpperCase().includes(textoUp))
+    .slice(0, 8)
+    .map(j => `${j.name} (${j.team})`);
+};
 
   // IDs con su respectivo ID de datalist asignado
   const premios = [
@@ -127,56 +144,50 @@ if (error) throw error;
         <h2 className="text-xl font-black text-yellow-500 italic uppercase mb-8 text-center tracking-widest">
           {t.nav_extras}
         </h2>
-        
-        <div className="space-y-6">
-          {premios.map((p) => (
-            <div key={p.id} className="flex flex-col gap-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase ml-2">
-                {p.label}
-              </label>
-              <input
-                type="text"
-                list={p.listId} // Enlazamos el input con su respectivo datalist abajo
-                value={extras[p.id] || ''}
-                onChange={(e) => setExtras({ ...extras, [p.id]: e.target.value.toUpperCase() })}
-                placeholder={t.placeholder_extras || "Escribe para buscar..."}
-                className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white font-black uppercase focus:border-yellow-500 outline-none transition-all"
-              />
-            </div>
-          ))}
-        </div>
 
-        {/* --- FUENTES DE DATOS PARA EL AUTOCOMPLETADO (DATALISTS) --- */}
-        
-        {/* 1. Lista de todos los jugadores */}
-        <datalist id="list-todos">
-          {jugadores.map((j) => (
-            <option key={j.id} value={`${j.name} (${j.team})`} />
-          ))}
-        </datalist>
-
-        {/* 2. Lista exclusiva de porteros */}
-        <datalist id="list-porteros">
-          {soloPorteros.map((j) => (
-            <option key={j.id} value={`${j.name} (${j.team})`} />
-          ))}
-        </datalist>
-
-        {/* 3. Lista exclusiva de jugadores jóvenes (sub-23) */}
-        <datalist id="list-jovenes">
-          {soloJovenes.map((j) => (
-            <option key={j.id} value={`${j.name} (${j.team})`} />
-          ))}
-        </datalist>
-
-        {/* 4. Lista de selecciones nacionales únicos */}
-        <datalist id="list-selecciones">
-          {listaSelecciones.map((team) => (
-            <option key={team} value={team} />
-          ))}
-        </datalist>
-
-        {/* --- FIN DATALISTS --- */}
+    <div className="space-y-6">
+  {premios.map((p) => {
+    const sugerencias = getSugerencias(p.listId, busqueda[p.id] ?? extras[p.id]);
+    const estaActivo = inputActivo === p.id;
+    return (
+      <div key={p.id} className="flex flex-col gap-2 relative">
+        <label className="text-[10px] font-black text-gray-400 uppercase ml-2">
+          {p.label}
+        </label>
+        <input
+          type="text"
+          value={busqueda[p.id] !== undefined ? busqueda[p.id] : (extras[p.id] || '')}
+          onChange={(e) => {
+          setBusqueda(prev => ({ ...prev, [p.id]: e.target.value }));
+          setInputActivo(p.id);
+          }}
+          onFocus={() => setInputActivo(p.id)}
+          onBlur={() => setTimeout(() => setInputActivo(null), 200)}
+          placeholder={t.placeholder_extras || "Escribe para buscar..."}
+          className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white font-black focus:border-yellow-500 outline-none transition-all"
+        />
+        {estaActivo && sugerencias.length > 0 && (
+          <div className="absolute top-full left-0 right-0 z-50 bg-gray-900 border border-white/20 rounded-2xl overflow-hidden shadow-2xl mt-1">
+            {sugerencias.map((s, i) => (
+              <button
+                key={i}
+                type="button"
+              onMouseDown={() => {
+                setExtras({ ...extras, [p.id]: s });
+                setBusqueda(prev => ({ ...prev, [p.id]: s }));
+                setInputActivo(null);
+              }}
+                className="w-full text-left px-4 py-3 text-[11px] font-black uppercase text-white hover:bg-white/10 border-b border-white/5 last:border-0 transition-colors"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  })}
+</div>          
 
 {/* BOTÓN CON CORRECCIÓN VISUAL DE ESTADOS */}
         <button

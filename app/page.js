@@ -173,11 +173,11 @@ if (pr) {
       const { data: pl, error: errorJugadores } = await supabase
         .from('players')
         .select('*')
-        .order('name', { ascending: true });
-      
+        .order('name', { ascending: true })
+        .limit(2000);
       
       if (errorJugadores) console.error("=== ERROR SUPABASE JUGADORES ===", errorJugadores);
-      
+            
       setJugadores(pl || []);
       // ---------------------------------------------  
 
