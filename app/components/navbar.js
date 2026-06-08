@@ -7,7 +7,8 @@ export default function Navbar({ t, tab, setTab }) {
     { id: 'matches', label: t.nav_pronosticos },
     { id: 'results', label: t.nav_resultados },
     { id: 'ranking', label: t.nav_ranking },
-    { id: 'bets', label: t.nav_apuestas }
+    { id: 'bets', label: t.nav_apuestas },
+    { id: 'stats', label: t.nav_estadisticas }
   ];
 
   return (

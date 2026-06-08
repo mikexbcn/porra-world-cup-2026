@@ -15,6 +15,7 @@ import BracketTab from './components/brackettab';
 import AdminTab from './components/admintab';
 import RankingTab from './components/rankingtab';
 import ResultsTab from './components/resultstab';
+import StatsTab from './components/statstab';
 // --- FINAL DE CABECERA page.js ---
 
 
@@ -335,6 +336,13 @@ return (
           t={t}
           getFlag={getFlag}
         />
+      )}
+      {tab === 'stats' && (
+      <StatsTab
+      t={t}
+      partidos={partidos}
+      getFlag={getFlag}
+      />
       )}
 
       {/* --- SECCIÓN DE ADMINISTRADOR PROTÉGIDA --- */}
