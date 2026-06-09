@@ -2,8 +2,29 @@
 
 const EDICIONES = [
   {
-    año: 2022,
-    sede: "Qatar",
+    año: 2014,
+    sede: "Brazil",
+    bandera: "br",
+    campeonMundial: "Germany",
+    banderapMundial: "de",
+    campeonPorra: "Jorge and Dami",
+    puntos: 34,
+    participantes: null,
+    bote: null,
+  },
+  {
+    año: 2018,
+    sede: "Russia",
+    bandera: "ru",
+    campeonMundial: "France",
+    banderapMundial: "fr",
+    campeonPorra: "Josep",
+    puntos: 43,
+    participantes: null,
+    bote: null,
+  },
+  {
+    año: 2022,    sede: "Qatar",
     bandera: "qa",
     campeonMundial: "Argentina",
     banderapMundial: "ar",
@@ -11,7 +32,7 @@ const EDICIONES = [
     puntos: 85,
     participantes: null,
     bote: null,
-  }
+  } 
 ];
 
 export default function SalonTab({ t }) {
