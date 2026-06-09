@@ -16,6 +16,7 @@ import AdminTab from './components/admintab';
 import RankingTab from './components/rankingtab';
 import ResultsTab from './components/resultstab';
 import StatsTab from './components/statstab';
+import SalonTab from './components/salontab';
 // --- FINAL DE CABECERA page.js ---
 
 
@@ -343,6 +344,9 @@ return (
       partidos={partidos}
       getFlag={getFlag}
       />
+      )}
+      {tab === 'salon' && (
+      <SalonTab t={t} />
       )}
 
       {/* --- SECCIÓN DE ADMINISTRADOR PROTÉGIDA --- */}
