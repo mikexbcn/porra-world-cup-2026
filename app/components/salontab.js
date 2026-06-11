@@ -7,7 +7,7 @@ const EDICIONES = [
     bandera: "br",
     campeonMundial: "Germany",
     banderapMundial: "de",
-    campeonPorra: "Jorge and Dami", // Detecta automáticamente el empate
+    campeonPorra: "Jorge", // Detecta automáticamente el empate
     puntos: 34,
     participantes: null,
     bote: null,

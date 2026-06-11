@@ -229,11 +229,11 @@ const handleSaveMatches = async () => {
                       const tieneApuesta = pronosticos?.[match.id]?.h !== undefined && pronosticos?.[match.id]?.h !== null && pronosticos?.[match.id]?.h !== '';
                       return tieneApuesta ? (
                         <span className="text-[9px] bg-green-950/80 text-green-400 font-black px-3 py-1 rounded-full uppercase tracking-wider inline-block mt-2 border border-green-800/30">
-                          {t('matches_bet_closed')}
+                          {t.matches_bet_closed}
                         </span>
                       ) : (
                         <span className="text-[9px] bg-red-950/80 text-red-400 font-black px-3 py-1 rounded-full uppercase tracking-wider inline-block mt-2 border border-red-800/30">
-                          {t('matches_no_bet')}
+                          {t.matches_no_bet}
                         </span>
                       );
                     })()
