@@ -6,6 +6,7 @@ export default function Navbar({ t, tab, setTab }) {
     { id: 'rules', label: t.nav_inicio },
     { id: 'matches', label: t.nav_pronosticos },
     { id: 'results', label: t.nav_resultados },
+    { id: 'seguimiento', label: t.nav_seguimiento },
     { id: 'ranking', label: t.nav_ranking },
     { id: 'bets', label: t.nav_apuestas },
     { id: 'stats', label: t.nav_estadisticas },

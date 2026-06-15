@@ -17,6 +17,7 @@ import RankingTab from './components/rankingtab';
 import ResultsTab from './components/resultstab';
 import StatsTab from './components/statstab';
 import SalonTab from './components/salontab';
+import SeguimientoTab from './components/seguimientotab';
 // --- FINAL DE CABECERA page.js ---
 
 
@@ -347,6 +348,13 @@ return (
       )}
       {tab === 'salon' && (
       <SalonTab t={t} />
+      )}
+      {tab === 'seguimiento' && (
+      <SeguimientoTab
+      t={t}
+      getFlag={getFlag}
+      session={session}
+      />
       )}
 
       {/* --- SECCIÓN DE ADMINISTRADOR PROTÉGIDA --- */}
