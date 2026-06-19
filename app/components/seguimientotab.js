@@ -152,6 +152,7 @@ export default function SeguimientoTab({ t, getFlag, session }) {
             </div>
 
             {/* PRONÓSTICOS DE TODOS LOS JUGADORES */}
+            {(match.group_stage?.includes('GROUP') || estado !== 'PENDIENTE') ? (
             <div className="bg-black/40 rounded-2xl p-3 space-y-2">
               {usuarios.map(user => {
                 const pred = pronosticos[matchId]?.[user.id];
@@ -188,12 +189,16 @@ export default function SeguimientoTab({ t, getFlag, session }) {
                   </div>
                 );
               })}
-            </div>
+          </div>
+            ) : (
+              <div className="bg-black/40 rounded-2xl p-4 text-center">
+                <span className="text-[10px] text-gray-500 font-black uppercase">🔒 {t.seguimiento_oculto}</span>
+              </div>
+            )}
 
           </div>
         );
       })}
-
     </div>
   );
 }
