@@ -168,17 +168,22 @@ const tercerosOrdenados = getMejoresTerceros(tablasUsuario)
           console.log('[' + user.username + '] ROUND32 completo:', Array.from(equiposUsuarioRound32))
 
           let puntosTotales = 0
+          let golesAcertados = 0
 
 // ── MARCADORES: puntos por marcador exacto (todas las fases) ──
-          apuestasUsuario.forEach(apuesta => {
+apuestasUsuario.forEach(apuesta => {
             const partidoReal = partidosMap[apuesta.match_id]
             if (partidoReal && partidoReal.is_finished) {
-              puntosTotales += calcularPuntosPartido(
+              const ptsPartido = calcularPuntosPartido(
                 apuesta.prediction_home,
                 apuesta.prediction_away,
                 partidoReal.home_score,
                 partidoReal.away_score
               )
+              puntosTotales += ptsPartido
+              if (ptsPartido === 5 && apuesta.prediction_home !== null && apuesta.prediction_away !== null) {
+                golesAcertados += Number(apuesta.prediction_home) + Number(apuesta.prediction_away)
+              }
             }
           })
 
@@ -278,6 +283,7 @@ if (user.username === 'Messi' || user.username === 'messi') {
               if (Number(apuesta.prediction_home) === Number(partidoReal.home_score) &&
                   Number(apuesta.prediction_away) === Number(partidoReal.away_score)) {
                 puntosTotales += 5
+                golesAcertados += Number(apuesta.prediction_home) + Number(apuesta.prediction_away)
               }
             }
           })
@@ -299,13 +305,14 @@ if (user.username === 'Messi' || user.username === 'messi') {
             console.error("Error calculando extras:", errExtra)
           }
 
-          return {
+return {
             username: user.username || 'Usuario Anónimo',
-            puntos: puntosTotales
+            puntos: puntosTotales,
+            goles: golesAcertados
           }
         })
 
-        listaCalculada.sort((a, b) => b.puntos - a.puntos)
+        listaCalculada.sort((a, b) => b.puntos !== a.puntos ? b.puntos - a.puntos : b.goles - a.goles)
         setClasificacion(listaCalculada)
 
         // Calcular bote excluyendo usuario DEMO
@@ -382,6 +389,7 @@ return (
                 <th className="p-4 text-center w-16">{t.ranking_pos || 'POS'}</th>
                 <th className="p-4">{t.ranking_user || 'USUARIO'}</th>
                 <th className="p-4 text-right w-24">{t.stats_pts || 'PUNTOS'}</th>
+                <th className="p-4 text-right w-16 text-gray-500">{t.ranking_goles}</th>
                 <th className="p-4 text-right w-16 text-gray-500">-LDR</th>
               </tr>
             </thead>
@@ -398,8 +406,11 @@ return (
                     <td className="p-4 uppercase text-xs tracking-wide text-white">
                     {u.username}
                   </td>
-                    <td className="p-4 text-right font-black text-yellow-500 text-sm">
+                  <td className="p-4 text-right font-black text-yellow-500 text-sm">
                     {u.puntos} <span className="text-[10px] font-normal text-gray-400">{t.stats_pts || 'PTS'}</span>
+                  </td>
+                  <td className="p-4 text-right text-[10px] font-black text-gray-500">
+                    {u.goles}
                   </td>
                   <td className="p-4 text-right text-[10px] font-black text-gray-500">
                     {index === 0 ? <span className="text-yellow-500">LDR</span> : `-${clasificacion[0].puntos - u.puntos}`}
