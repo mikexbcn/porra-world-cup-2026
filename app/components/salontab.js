@@ -33,6 +33,20 @@ const EDICIONES = [
     puntos: 85,
     participantes: null,
     bote: null,
+  },
+  {
+    año: 2026,    
+    sede: [
+      { pais: "USA", bandera: "us" },
+      { pais: "CANADA", bandera: "ca" },
+      { pais: "MEXICO", bandera: "mx" },
+    ],
+    campeonMundial: "SPAIN",
+    banderapMundial: "es",
+    campeonPorra: "Mike",
+    puntos: 212,
+    participantes: 10,
+    bote: null,
   } 
 ];
 
@@ -66,17 +80,33 @@ export default function SalonTab({ t }) {
             </div>
 
             {/* SEDE */}
-            <div className="flex items-center gap-3 mb-5">
-              <img 
-                src={`https://flagcdn.com/w80/${ed.bandera}.png`} 
-                className="w-8 h-5 rounded shadow" 
-                alt="" 
-              />
-              <div>
-                <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">{t.salon_edition || 'EDICIÓN'}</p>
-                <p className="text-sm font-black text-white uppercase">{ed.sede} {ed.año}</p>
+          <div className="flex items-center gap-3 mb-5 flex-wrap">
+            <div>
+              <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">{t.salon_edition} {ed.año}</p>
+              <div className="flex items-center gap-3 flex-wrap">
+                {Array.isArray(ed.sede) ? ed.sede.map((s, i) => (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <img 
+                      src={`https://flagcdn.com/w80/${s.bandera}.png`} 
+                      className="w-7 h-5 rounded shadow" 
+                      alt="" 
+                    />
+                    <span className="text-[10px] font-black text-white uppercase">{s.pais}</span>
+                    {i < ed.sede.length - 1 && <span className="text-gray-600 font-black">/</span>}
+                  </div>
+                )) : (
+                  <div className="flex items-center gap-1.5">
+                    <img 
+                      src={`https://flagcdn.com/w80/${ed.bandera}.png`} 
+                      className="w-7 h-5 rounded shadow" 
+                      alt="" 
+                    />
+                    <span className="text-[10px] font-black text-white uppercase">{ed.sede}</span>
+                  </div>
+                )}
               </div>
             </div>
+          </div>
 
             <div className="grid grid-cols-2 gap-4">
               {/* CAMPEÓN DEL MUNDIAL */}
