@@ -1,4 +1,6 @@
 // app/components/salontab.js
+import { useState } from 'react'
+import Stats2026Tab from './stats2026tab'
 
 const EDICIONES = [
   {
@@ -51,6 +53,11 @@ const EDICIONES = [
 ];
 
 export default function SalonTab({ t }) {
+  const [statsAbierto, setStatsAbierto] = useState(null)
+
+  if (statsAbierto === 2026) {
+    return <Stats2026Tab t={t} onClose={() => setStatsAbierto(null)} />
+  }
   return (
     <div className="max-w-2xl mx-auto pb-20 animate-fade-in space-y-6">
       
@@ -137,7 +144,7 @@ export default function SalonTab({ t }) {
                         </span>
                       </div>
                     ))}
-                  </div>
+                  </div>                
                 </div>
                 
                 {/* Nombre completo debajo y puntos */}
@@ -146,7 +153,18 @@ export default function SalonTab({ t }) {
                   <p className="text-[10px] text-gray-500 mt-1">{ed.puntos} {t.salon_points || 'Puntos'}</p>
                 </div>
               </div>
-            </div>
+       
+       </div>
+
+          {/* BOTÓN VER ESTADÍSTICAS */}
+          {ed.año === 2026 && (
+            <button
+              onClick={() => setStatsAbierto(2026)}
+              className="w-full mt-4 py-3 font-black uppercase text-[10px] rounded-2xl bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 hover:bg-yellow-500/20 transition-all tracking-widest"
+            >
+              {t.salon_ver_stats}
+            </button>
+          )}
 
           </div>
         );
