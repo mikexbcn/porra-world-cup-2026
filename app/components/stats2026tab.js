@@ -87,12 +87,20 @@ export default function Stats2026Tab({ t, onClose }) {
         let puntosPodium = 0
         const podiumAcertados = { campeon: 0, subcampeon: 0, tercero: 0, cuarto: 0 }
         const podium1 = apuestas.find(p => p.match_id === 'podium_1')
+        const podium2 = apuestas.find(p => p.match_id === 'podium_2')
         const podium3 = apuestas.find(p => p.match_id === 'podium_3')
+        const podium4 = apuestas.find(p => p.match_id === 'podium_4')
         if (extrasOficiales?.champion && podium1?.selected_team?.toUpperCase() === extrasOficiales.champion?.toUpperCase()) {
-          podiumAcertados.campeon = 10; puntosPodium += 10
+        podiumAcertados.campeon = 20; puntosPodium += 20
+        }
+        if (extrasOficiales?.runner_up && podium2?.selected_team?.toUpperCase() === extrasOficiales.runner_up?.toUpperCase()) {
+        podiumAcertados.subcampeon = 0
         }
         if (extrasOficiales?.third_place && podium3?.selected_team?.toUpperCase() === extrasOficiales.third_place?.toUpperCase()) {
-          podiumAcertados.tercero = 12; puntosPodium += 12
+        podiumAcertados.tercero = 12; puntosPodium += 12
+        }
+        if (extrasOficiales?.fourth_place && podium4?.selected_team?.toUpperCase() === extrasOficiales.fourth_place?.toUpperCase()) {
+        podiumAcertados.cuarto = 0
         }
 
         const totalAcertados = Object.values(aciertos).reduce((a, b) => a + b, 0)
@@ -242,8 +250,10 @@ export default function Stats2026Tab({ t, onClose }) {
             <thead>
               <tr className="border-b border-white/10 text-gray-500 font-black uppercase">
                 <th className="py-2 pr-4">Usuario</th>
-                <th className="py-2 px-2 text-center">🥇</th>
-                <th className="py-2 px-2 text-center">🥉</th>
+                <th className="py-2 px-2 text-center">🥇<br/><span className="text-[8px] text-yellow-500">20pts</span></th>
+                <th className="py-2 px-2 text-center">🥈<br/><span className="text-[8px] text-gray-600">0pts</span></th>
+                <th className="py-2 px-2 text-center">🥉<br/><span className="text-[8px] text-yellow-500">12pts</span></th>
+                <th className="py-2 px-2 text-center">4º<br/><span className="text-[8px] text-gray-600">0pts</span></th>
                 <th className="py-2 px-2 text-center text-yellow-500">PTS</th>
               </tr>
             </thead>
@@ -251,8 +261,10 @@ export default function Stats2026Tab({ t, onClose }) {
               {datos?.statsJugadores.map((u) => (
                 <tr key={u.username} className="border-b border-white/5 text-white">
                   <td className="py-2 pr-4 font-black uppercase">{u.username}</td>
-                  <td className="py-2 px-2 text-center">{u.podiumAcertados.campeon > 0 ? '✓' : '-'}</td>
-                  <td className="py-2 px-2 text-center">{u.podiumAcertados.tercero > 0 ? '✓' : '-'}</td>
+                  <td className="py-2 px-2 text-center text-yellow-500">{u.podiumAcertados.campeon > 0 ? '✓' : '-'}</td>
+                  <td className="py-2 px-2 text-center text-gray-600">-</td>
+                  <td className="py-2 px-2 text-center text-yellow-500">{u.podiumAcertados.tercero > 0 ? '✓' : '-'}</td>
+                  <td className="py-2 px-2 text-center text-gray-600">-</td>
                   <td className="py-2 px-2 text-center font-black text-yellow-500">{u.puntosPodium}</td>
                 </tr>
               ))}

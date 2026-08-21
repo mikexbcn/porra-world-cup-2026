@@ -20,8 +20,8 @@ export default function AdminTab({ session, partidos, setPartidos, t, getFlag, j
   const [filtroFase, setFiltroFase] = useState('GROUP A')
 
 // --- NUEVO: Estados para los Premios Extra y Podio ---
-  const [extrasOficiales, setExtrasOficiales] = useState({
-    champion: '', runner_up: '', third_place: '',
+const [extrasOficiales, setExtrasOficiales] = useState({
+    champion: '', runner_up: '', third_place: '', fourth_place: '',
     top_scorer: '', best_keeper: '', best_player: '',
     fair_play: '', best_young: ''
   })
@@ -63,6 +63,7 @@ export default function AdminTab({ session, partidos, setPartidos, t, getFlag, j
             champion: data.champion || '',
             runner_up: data.runner_up || '',
             third_place: data.third_place || '',
+            fourth_place: data.fourth_place || '',
             top_scorer: data.top_scorer || '',
             best_keeper: data.best_keeper || '',
             best_player: data.best_player || '',
@@ -187,6 +188,7 @@ const handleGuardarResultado = async (matchId) => {
           champion: extrasOficiales.champion,
           runner_up: extrasOficiales.runner_up,
           third_place: extrasOficiales.third_place,
+          fourth_place: extrasOficiales.fourth_place,
           top_scorer: extrasOficiales.top_scorer,
           best_keeper: extrasOficiales.best_keeper,
           best_player: extrasOficiales.best_player,
@@ -195,7 +197,6 @@ const handleGuardarResultado = async (matchId) => {
           updated_at: new Date().toISOString()
         })
         .eq('id', 1)
-
     if (error) throw error
       alert(t.admin_alert_extras_success || "Podio y Premios Extra oficiales actualizados correctamente.")
     } catch (err) {
@@ -418,7 +419,7 @@ return (
                 />
               </div>
 
-              <div className="space-y-2">
+          <div className="space-y-2">
                 <label className="block text-[10px] font-bold text-gray-400 uppercase">
                   {t.podium_third_place || 'Tercer Puesto'}
                 </label>
@@ -430,8 +431,20 @@ return (
                   className="w-full bg-black border border-white/10 px-3 py-2 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500 uppercase"
                 />
               </div>
-            </div>
 
+              <div className="space-y-2">
+                <label className="block text-[10px] font-bold text-gray-400 uppercase">
+                  {t.podium_fourth_place || 'Cuarto Puesto'}
+                </label>
+                <input
+                  type="text"
+                  value={extrasOficiales.fourth_place}
+                  onChange={(e) => setExtrasOficiales(prev => ({ ...prev, fourth_place: e.target.value.toUpperCase() }))}
+                  placeholder="Ej: FRANCE"
+                  className="w-full bg-black border border-white/10 px-3 py-2 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500 uppercase"
+                />
+              </div>
+            </div>
 {/* --- BLOQUE DE PREMIOS EXTRA (INTERNACIONALIZADO) --- */}
             <div className="bg-black/30 border border-white/5 p-4 rounded-2xl space-y-3">
               <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-2 border-b border-white/5 pb-1">
