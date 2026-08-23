@@ -214,6 +214,9 @@ export const translations = {
     stats2026_total_acertados: "Total acertados",
     stats2026_total_puntos: "Total puntos",
     podium_fourth_place: "Cuarto Puesto",
+    ranking_sube: "sube",
+    ranking_baja: "baja",
+    ranking_igual: "igual",
   },
   ca: { 
     title: "MUNDIAL", predictions: "Partits", honor: "Premis", logout: "Sortir", save: "Confirmar 🔒", saveExtras: "Guardar 🏆", vip: "INTRODUEIX EL TEU TOKEN", loginBtn: "Entrar", signupBtn: "Crear Compte", email: "Correu", pass: "Contrasenya", user: "Usuari", welcome: "Hola!", already: "Ja tens compte?", useToken: "Tinc un Token", ranking: "Rànquing", tableTitle: "Posicions", validate: "Validar Token", loginLink: "Entrar", backToken: "Tornar al Token", loading: "CARREGANT...",
@@ -428,6 +431,9 @@ export const translations = {
     stats2026_total_acertados: "Total encertats",
     stats2026_total_puntos: "Total punts",
     podium_fourth_place: "Quart Lloc",
+    ranking_sube: "puja",
+    ranking_baja: "baixa",
+    ranking_igual: "igual",
   },
   en: { 
     title: "WORLD CUP", predictions: "Matches", honor: "Prizes", logout: "Logout", save: "Confirm 🔒", saveExtras: "Save 🏆", vip: "ENTER YOUR TOKEN", loginBtn: "Login", signupBtn: "Sign Up", email: "Email", pass: "Password", user: "Username", welcome: "Hi!", already: "Have an account?", useToken: "Use Token", ranking: "Ranking", tableTitle: "Standings", validate: "Validate Token", loginLink: "Login", backToken: "Back to Token", loading: "LOADING...",
@@ -642,5 +648,8 @@ export const translations = {
     stats2026_total_acertados: "Total correct",
     stats2026_total_puntos: "Total points",
     podium_fourth_place: "Fourth Place",
+    ranking_sube: "up",
+    ranking_baja: "down",
+    ranking_igual: "same",
   }
 };

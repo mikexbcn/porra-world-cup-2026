@@ -1,10 +1,13 @@
 // app/components/stats2026tab.js
 import { useState, useEffect } from 'react'
 import { supabase } from '../../supabaseClient'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 export default function Stats2026Tab({ t, onClose }) {
   const [loading, setLoading] = useState(true)
   const [datos, setDatos] = useState(null)
+  const [datosGrafica, setDatosGrafica] = useState([])
+  const [usuarios, setUsuarios] = useState([])
 
   useEffect(() => {
     cargarDatos()
@@ -124,6 +127,42 @@ export default function Stats2026Tab({ t, onClose }) {
       statsJugadores.sort((a, b) => b.totalPuntos - a.totalPuntos)
 
       setDatos({ statsJugadores, numJugadores: usuarios?.length || 0 })
+
+            // CARGAR SNAPSHOTS PARA LA GRÁFICA
+      const { data: snapshots } = await supabase
+        .from('ranking_snapshots')
+        .select('username, puntos, match_date')
+        .order('match_date', { ascending: true })
+
+      if (snapshots && snapshots.length > 0) {
+        // Obtener usuarios únicos
+        const usernames = [...new Set(snapshots.map(s => s.username))]
+        setUsuarios(usernames)
+
+        // Agrupar por día y quedarse con el último snapshot de cada día
+        const porDia = {}
+        snapshots.forEach(s => {
+        const dia = new Date(s.match_date).toISOString().split('T')[0]
+        if (!porDia[dia] || s.match_date > porDia[dia]) {
+          porDia[dia] = s.match_date
+        }
+     })
+        const fechasUnicas = Object.values(porDia).sort()
+
+        // Construir datos para la gráfica
+        const dataGrafica = fechasUnicas.map(fecha => {
+          const punto = { 
+            fecha: new Date(fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
+          }
+          usernames.forEach(username => {
+            const snap = snapshots.find(s => s.match_date === fecha && s.username === username)
+            punto[username] = snap ? snap.puntos : null
+          })
+          return punto
+        })
+        setDatosGrafica(dataGrafica)
+      }
+
 
     } catch (err) {
       console.error("Error cargando stats 2026:", err)
@@ -271,6 +310,56 @@ export default function Stats2026Tab({ t, onClose }) {
             </tbody>
           </table>
         </div>
+
+        {/* GRÁFICA DE EVOLUCIÓN */}
+        {datosGrafica.length > 0 && (
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mb-6">
+            <h2 className="text-sm font-black text-yellow-500 uppercase tracking-widest mb-6">📈 Evolución del Ranking</h2>
+            <ResponsiveContainer width="100%" height={350}>
+              <LineChart data={datosGrafica} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis 
+                  dataKey="fecha" 
+                  tick={{ fill: '#6b7280', fontSize: 9, fontWeight: 'bold' }}
+                  axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                />
+                <YAxis 
+                  tick={{ fill: '#6b7280', fontSize: 9, fontWeight: 'bold' }}
+                  axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                />
+                <Tooltip
+                  contentStyle={{ 
+                    backgroundColor: '#111', 
+                    border: '1px solid rgba(255,255,255,0.1)', 
+                    borderRadius: '12px',
+                    fontSize: '10px',
+                    fontWeight: 'bold'
+                  }}
+                  labelStyle={{ color: '#eab308', fontWeight: 'black', marginBottom: '4px' }}
+                />
+                <Legend 
+                  wrapperStyle={{ fontSize: '9px', fontWeight: 'bold', paddingTop: '16px' }}
+                />
+                {usuarios.map((username, i) => {
+                  const colores = ['#eab308', '#ef4444', '#3b82f6', '#10b981', '#f97316', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f59e0b']
+                  return (
+                    <Line
+                      key={username}
+                      type="monotone"
+                      dataKey={username}
+                      stroke={colores[i % colores.length]}
+                      strokeWidth={2}
+                      strokeDasharray={i % 3 === 1 ? "5 5" : i % 3 === 2 ? "3 3" : "0"}
+                      dot={{ r: 3, fill: colores[i % colores.length] }}
+                      activeDot={{ r: 5 }}
+                      connectNulls={true}
+                    />
+                  )
+                })}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
 
       </div>
     </div>

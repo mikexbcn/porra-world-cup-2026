@@ -8,6 +8,7 @@ export default function RankingTab({ partidos, t, tablas: tablasOficiales }) {
   const [clasificacion, setClasificacion] = useState([])
   const [loading, setLoading] = useState(true)
   const [infoBote, setInfoBote] = useState({ numJugadores: 0, bote: 0 })
+  const [snapshotAnterior, setSnapshotAnterior] = useState({})
   
   useEffect(() => {
     async function obtenerRanking() {
@@ -315,6 +316,27 @@ return {
         listaCalculada.sort((a, b) => b.puntos !== a.puntos ? b.puntos - a.puntos : b.goles - a.goles)
         setClasificacion(listaCalculada)
 
+        // Cargar snapshot anterior para las flechas
+        const { data: snapshots } = await supabase
+          .from('ranking_snapshots')
+          .select('username, posicion, match_date')
+          .order('match_date', { ascending: false })
+
+        if (snapshots && snapshots.length > 0) {
+          // Obtener las fechas únicas ordenadas
+          const fechasUnicas = [...new Set(snapshots.map(s => s.match_date))].sort()
+          // Coger el penúltimo snapshot
+        if (fechasUnicas.length >= 2) {
+          const fechaUltima = fechasUnicas[fechasUnicas.length - 1]
+          const fechaAnterior = fechasUnicas[fechasUnicas.length - 2]
+          const snapAnterior = {}
+          snapshots.filter(s => s.match_date === fechaAnterior).forEach(s => {
+          snapAnterior[s.username] = s.posicion
+          })
+          setSnapshotAnterior(snapAnterior)
+          }
+        }
+
         // Calcular bote excluyendo usuario DEMO
         const jugadoresReales = usuarios.filter(u => u.username?.toUpperCase() !== 'DEMO')
         const numJugadores = jugadoresReales.length
@@ -404,7 +426,15 @@ return (
                       {esTop3 ? <span className="text-base">{medallas[index]}</span> : index + 1}
                     </td>
                     <td className="p-4 uppercase text-xs tracking-wide text-white">
-                    {u.username}
+                    <div className="flex items-center gap-2">
+                      {u.username}
+                      {snapshotAnterior[u.username] !== undefined && (() => {
+                        const diff = snapshotAnterior[u.username] - (index + 1)
+                        if (diff > 0) return <span className="text-green-400 text-[9px] font-black">▲{diff}</span>
+                        if (diff < 0) return <span className="text-red-400 text-[9px] font-black">▼{Math.abs(diff)}</span>
+                        return <span className="text-gray-600 text-[9px] font-black">—</span>
+                      })()}
+                    </div>
                   </td>
                   <td className="p-4 text-right font-black text-yellow-500 text-sm">
                     {u.puntos} <span className="text-[10px] font-normal text-gray-400">{t.stats_pts || 'PTS'}</span>

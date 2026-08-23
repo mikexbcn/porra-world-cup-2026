@@ -1,6 +1,8 @@
 // app/components/admintab.js
 import { useState, useEffect } from 'react'
 import { supabase } from '../../supabaseClient'
+import { calcularPuntosPartido } from '../libs/motorpuntos'
+import { getMejoresTerceros } from '../libs/utils'
 
 export default function AdminTab({ session, partidos, setPartidos, t, getFlag, jugadores = [] }) {
   const [resultados, setResultados] = useState({})
@@ -26,6 +28,7 @@ const [extrasOficiales, setExtrasOficiales] = useState({
     fair_play: '', best_young: ''
   })
   const [guardandoExtras, setGuardandoExtras] = useState(false)
+  const [guardandoSnapshot, setGuardandoSnapshot] = useState(false)
   const [totalVisitas, setTotalVisitas] = useState(null)
 
   // Tu email de administrador para proteger el panel
@@ -152,8 +155,61 @@ const handleGuardarResultado = async (matchId) => {
 
     if (error) throw error
 
-    // Actualizar el estado local para que la interfaz se refresque en vivo
+    // Actualizar el estado local
     setPartidos(prev => prev.map(m => m.id === matchId ? { ...m, ...datosActualizar } : m))
+
+    // SNAPSHOT DEL RANKING si el partido se marca como finalizado
+    if (estaFinalizado) {
+      try {
+        // 1. Traer todas las predicciones y usuarios
+        const { data: todasPreds } = await supabase.from('predictions').select('*')
+        const { data: usuarios } = await supabase.from('profiles').select('id, username').neq('username', 'DEMO')
+        const { data: todosPartidos } = await supabase.from('matches').select('*')
+
+        // 2. Calcular puntos simples por marcador exacto para cada usuario
+        const partidosFinalizados = todosPartidos?.filter(m => m.is_finished) || []
+        const partidosMap = {}
+        partidosFinalizados.forEach(m => { partidosMap[m.id] = m })
+
+        const rankingActual = (usuarios || []).map(user => {
+          const apuestas = (todasPreds || []).filter(p => p.user_id === user.id)
+          let puntos = 0
+          apuestas.forEach(ap => {
+            const partido = partidosMap[ap.match_id]
+            if (!partido) return
+            if (ap.prediction_home !== null && ap.prediction_away !== null &&
+                Number(ap.prediction_home) === Number(partido.home_score) &&
+                Number(ap.prediction_away) === Number(partido.away_score)) {
+              puntos += 5
+            }
+          })
+          return { user_id: user.id, username: user.username, puntos }
+        })
+
+        // 3. Ordenar y asignar posición
+        rankingActual.sort((a, b) => b.puntos - a.puntos)
+        rankingActual.forEach((u, i) => { u.posicion = i + 1 })
+
+        // 4. Borrar snapshots anteriores de este partido si los hay
+        await supabase.from('ranking_snapshots').delete().eq('match_id', matchId)
+
+        // 5. Insertar nuevo snapshot con la fecha del partido
+        const snapshots = rankingActual.map(u => ({
+          match_id: matchId,
+          match_date: partidoEnVivo.match_date,
+          user_id: u.user_id,
+          username: u.username,
+          puntos: u.puntos,
+          posicion: u.posicion
+        }))
+
+        await supabase.from('ranking_snapshots').insert(snapshots)
+
+      } catch (errSnap) {
+        console.error("Error guardando snapshot:", errSnap)
+      }
+    }
+
     alert(`${t.admin_alert_match || 'Partido'} ${homeTeam} vs ${awayTeam} ${t.admin_alert_updated_success || 'actualizado correctamente.'}`)
 
   } catch (err) {
@@ -176,6 +232,244 @@ const handleGuardarResultado = async (matchId) => {
         [campo]: valor
       }
     }))
+  }
+
+  const handleGuardarSnapshot = async () => {
+    setGuardandoSnapshot(true)
+    try {
+      // 1. Traer todos los datos necesarios
+      const { data: usuarios } = await supabase.from('profiles').select('id, username').neq('username', 'DEMO')
+      const { data: todasLasPredicciones } = await supabase.from('predictions').select('user_id, match_id, prediction_home, prediction_away, selected_team')
+      const { data: todasLasPrediccionesExtras } = await supabase.from('extra_predictions').select('*')
+      const { data: resultadosExtrasOficiales } = await supabase.from('extra_results').select('*').eq('id', 1).maybeSingle()
+      const { data: partidosFisicos } = await supabase.from('matches').select('*')
+
+      const partidosMap = {}
+      partidosFisicos?.forEach(m => { partidosMap[m.id] = m })
+
+      const grupos = ['A','B','C','D','E','F','G','H','I','J','K','L']
+
+      // ROUND 32
+      const equiposRealesRound32 = new Set()
+      partidosFisicos?.filter(m => m.group_stage?.toUpperCase() === "ROUND 32").forEach(m => {
+        if (m.home_team && !/\d/.test(m.home_team)) equiposRealesRound32.add(m.home_team.toUpperCase().trim())
+        if (m.away_team && !/\d/.test(m.away_team)) equiposRealesRound32.add(m.away_team.toUpperCase().trim())
+      })
+
+      // FASES ROUND 16 EN ADELANTE
+      const equiposRealesEnFase = { "ROUND 16": new Set(), "QUARTER-FINAL": new Set(), "SEMI-FINAL": new Set(), "3RD PLACE": new Set(), "FINAL": [] }
+      Object.values(partidosMap).forEach(m => {
+        const fase = m.group_stage?.toUpperCase()
+        if (!fase || fase === "ROUND 32" || fase.startsWith("GROUP")) return
+        if (equiposRealesEnFase[fase] === undefined) return
+        if (m.home_team && !/\d/.test(m.home_team)) {
+          const nombre = m.home_team.toUpperCase().trim()
+          if (nombre && nombre !== "NULL") {
+            if (fase === "FINAL") equiposRealesEnFase["FINAL"].push(nombre)
+            else equiposRealesEnFase[fase].add(nombre)
+          }
+        }
+        if (m.away_team && !/\d/.test(m.away_team)) {
+          const nombre = m.away_team.toUpperCase().trim()
+          if (nombre && nombre !== "NULL") {
+            if (fase === "FINAL") equiposRealesEnFase["FINAL"].push(nombre)
+            else equiposRealesEnFase[fase].add(nombre)
+          }
+        }
+      })
+
+      const clasificadosFinales = {
+        "ROUND 32": Array.from(equiposRealesRound32),
+        "ROUND 16": Array.from(equiposRealesEnFase["ROUND 16"]),
+        "QUARTER-FINAL": Array.from(equiposRealesEnFase["QUARTER-FINAL"]),
+        "SEMI-FINAL": Array.from(equiposRealesEnFase["SEMI-FINAL"]),
+        "3RD PLACE": Array.from(equiposRealesEnFase["3RD PLACE"]),
+        "FINAL": equiposRealesEnFase["FINAL"]
+      }
+
+      // CALCULAR PUNTOS POR USUARIO
+      const rankingActual = usuarios.map(user => {
+        const apuestasUsuario = todasLasPredicciones.filter(p => p.user_id === user.id)
+
+        // Reconstruir tabla pronosticada del usuario para ROUND 32
+        const tablasUsuario = {}
+        grupos.forEach(letra => {
+          const grupo = `GROUP ${letra}`
+          const eq = {}
+          partidosFisicos?.filter(m => m.group_stage?.toUpperCase() === grupo).forEach(m => {
+            const tienePred = apuestasUsuario.some(p => p.match_id === m.id)
+            if (!tienePred) return
+            if (!eq[m.home_team]) eq[m.home_team] = { nombre: m.home_team, pts: 0, gd: 0, gf: 0 }
+            if (!eq[m.away_team]) eq[m.away_team] = { nombre: m.away_team, pts: 0, gd: 0, gf: 0 }
+            const pred = apuestasUsuario.find(p => p.match_id === m.id)
+            if (pred && pred.prediction_home !== null && pred.prediction_away !== null) {
+              const h = parseInt(pred.prediction_home, 10)
+              const a = parseInt(pred.prediction_away, 10)
+              if (!isNaN(h) && !isNaN(a)) {
+                eq[m.home_team].gd += (h - a); eq[m.away_team].gd += (a - h)
+                eq[m.home_team].gf += h; eq[m.away_team].gf += a
+                if (h > a) eq[m.home_team].pts += 3
+                else if (a > h) eq[m.away_team].pts += 3
+                else { eq[m.home_team].pts += 1; eq[m.away_team].pts += 1 }
+              }
+            }
+          })
+          tablasUsuario[grupo] = Object.values(eq).sort((a, b) => b.pts !== a.pts ? b.pts - a.pts : b.gd !== a.gd ? b.gd - a.gd : (b.gf||0) !== (a.gf||0) ? (b.gf||0) - (a.gf||0) : a.nombre.localeCompare(b.nombre))
+        })
+
+        const equiposUsuarioRound32 = new Set()
+        grupos.forEach(letra => {
+          const tabla = tablasUsuario[`GROUP ${letra}`]
+          if (tabla?.[0]?.nombre) equiposUsuarioRound32.add(tabla[0].nombre.toUpperCase().trim())
+          if (tabla?.[1]?.nombre) equiposUsuarioRound32.add(tabla[1].nombre.toUpperCase().trim())
+        })
+
+        const tercerosOrdenados = getMejoresTerceros(tablasUsuario)
+        tercerosOrdenados.slice(0, 8).forEach(e => equiposUsuarioRound32.add(e.nombre.toUpperCase().trim()))
+
+        let puntosTotales = 0
+        let golesAcertados = 0
+
+        // MARCADORES
+        apuestasUsuario.forEach(apuesta => {
+          const partidoReal = partidosMap[apuesta.match_id]
+          if (partidoReal && partidoReal.is_finished) {
+            const ptsPartido = calcularPuntosPartido(apuesta.prediction_home, apuesta.prediction_away, partidoReal.home_score, partidoReal.away_score)
+            puntosTotales += ptsPartido
+            if (ptsPartido === 5 && apuesta.prediction_home !== null && apuesta.prediction_away !== null) {
+              golesAcertados += Number(apuesta.prediction_home) + Number(apuesta.prediction_away)
+            }
+          }
+        })
+
+        // ROUND 32
+        equiposUsuarioRound32.forEach(equipoUsuario => {
+          if (clasificadosFinales["ROUND 32"].includes(equipoUsuario)) puntosTotales += 1
+        })
+
+        // ROUND 16 EN ADELANTE
+        apuestasUsuario.forEach(apuesta => {
+          const matchIdStr = String(apuesta.match_id)
+          let faseObjetivo = ""
+          let puntosPorClasificar = 0
+          const numId = parseInt(matchIdStr, 10)
+          if (numId >= 89 && numId <= 96) { faseObjetivo = "ROUND 16"; puntosPorClasificar = 2 }
+          else if (numId >= 97 && numId <= 100) { faseObjetivo = "QUARTER-FINAL"; puntosPorClasificar = 4 }
+          else if (numId === 101 || numId === 102) { faseObjetivo = "SEMI-FINAL"; puntosPorClasificar = 8 }
+          else if (numId === 103) { faseObjetivo = "3RD PLACE"; puntosPorClasificar = 12 }
+          else if (numId === 104) { faseObjetivo = "FINAL"; puntosPorClasificar = 10 }
+
+          if (matchIdStr === 'podium_1') {
+            const partidoFinal = Object.values(partidosMap).find(m => m.group_stage?.toUpperCase() === "FINAL")
+            if (partidoFinal && partidoFinal.is_finished) {
+              let campeon = ""
+              if (partidoFinal.home_score > partidoFinal.away_score) campeon = partidoFinal.home_team
+              else if (partidoFinal.away_score > partidoFinal.home_score) campeon = partidoFinal.away_team
+              if (campeon && campeon.toUpperCase().trim() === apuesta.selected_team?.toUpperCase().trim()) puntosTotales += 20
+            }
+            return
+          }
+          if (matchIdStr === 'podium_3') {
+            const partido3 = Object.values(partidosMap).find(m => m.group_stage?.toUpperCase() === "3RD PLACE")
+            if (partido3 && partido3.is_finished) {
+              let tercero = ""
+              if (partido3.home_score > partido3.away_score) tercero = partido3.home_team
+              else if (partido3.away_score > partido3.home_score) tercero = partido3.away_team
+              if (tercero && tercero.toUpperCase().trim() === apuesta.selected_team?.toUpperCase().trim()) puntosTotales += 12
+            }
+            return
+          }
+          if (matchIdStr === 'podium_2' || matchIdStr === 'podium_4') return
+          if (numId === 103) return
+          if (!faseObjetivo) return
+          if (!apuesta.selected_team || apuesta.selected_team === 'null') return
+
+          const equipoPredicho = apuesta.selected_team.toUpperCase().trim()
+          const listaReales = clasificadosFinales[faseObjetivo] || []
+
+          if (faseObjetivo === "FINAL") {
+            if (listaReales.includes(equipoPredicho)) puntosTotales += 10
+          } else if (faseObjetivo === "3RD PLACE") {
+            const partido3 = Object.values(partidosMap).find(m => m.group_stage?.toUpperCase() === "3RD PLACE")
+            if (partido3 && partido3.is_finished) {
+              let tercero = ""
+              if (partido3.home_score > partido3.away_score) tercero = partido3.home_team
+              else if (partido3.away_score > partido3.home_score) tercero = partido3.away_team
+              if (tercero && tercero.toUpperCase().trim() === equipoPredicho) puntosTotales += 12
+            }
+          } else {
+            if (listaReales.includes(equipoPredicho)) puntosTotales += puntosPorClasificar
+          }
+
+          // Marcador exacto en eliminatorias
+          const idCuadro = numId
+          let indiceEnFase = 0
+          if (idCuadro >= 89 && idCuadro <= 96) indiceEnFase = idCuadro - 89
+          else if (idCuadro >= 97 && idCuadro <= 100) indiceEnFase = idCuadro - 97
+          else if (idCuadro === 101 || idCuadro === 102) indiceEnFase = idCuadro - 101
+
+          const partidosFiltrados = Object.values(partidosMap)
+            .filter(m => m.group_stage?.toUpperCase() === faseObjetivo)
+            .sort((a, b) => new Date(a.match_date).getTime() - new Date(b.match_date).getTime())
+
+          const partidoReal = partidosFiltrados[indiceEnFase]
+          if (partidoReal && partidoReal.is_finished && apuesta.prediction_home !== null && apuesta.prediction_away !== null) {
+            if (Number(apuesta.prediction_home) === Number(partidoReal.home_score) &&
+                Number(apuesta.prediction_away) === Number(partidoReal.away_score)) {
+              puntosTotales += 5
+              golesAcertados += Number(apuesta.prediction_home) + Number(apuesta.prediction_away)
+            }
+          }
+        })
+
+        // EXTRAS
+        if (todasLasPrediccionesExtras && resultadosExtrasOficiales) {
+          const extrasUsuario = todasLasPrediccionesExtras.find(ep => ep.user_id === user.id)
+          if (extrasUsuario) {
+            const PTS = 10
+            if (resultadosExtrasOficiales.top_scorer && extrasUsuario.top_scorer === resultadosExtrasOficiales.top_scorer) puntosTotales += PTS
+            if (resultadosExtrasOficiales.best_player && extrasUsuario.best_player === resultadosExtrasOficiales.best_player) puntosTotales += PTS
+            if (resultadosExtrasOficiales.best_keeper && extrasUsuario.best_keeper === resultadosExtrasOficiales.best_keeper) puntosTotales += PTS
+            if (resultadosExtrasOficiales.best_young && extrasUsuario.best_young === resultadosExtrasOficiales.best_young) puntosTotales += PTS
+            if (resultadosExtrasOficiales.fair_play && extrasUsuario.fair_play === resultadosExtrasOficiales.fair_play) puntosTotales += PTS
+          }
+        }
+
+        return { user_id: user.id, username: user.username, puntos: puntosTotales, goles: golesAcertados }
+      })
+
+      // Ordenar y asignar posición
+      rankingActual.sort((a, b) => b.puntos !== a.puntos ? b.puntos - a.puntos : b.goles - a.goles)
+      rankingActual.forEach((u, i) => { u.posicion = i + 1 })
+
+// Usar la fecha del último partido finalizado
+      const { data: ultimoPartido } = await supabase
+        .from('matches')
+        .select('match_date')
+        .eq('is_finished', true)
+        .order('match_date', { ascending: false })
+        .limit(1)
+        .single()
+
+      const fechaSnapshot = ultimoPartido?.match_date || new Date().toISOString()
+      const snapshots = rankingActual.map(u => ({
+        match_id: 'manual_' + Date.now(),
+        match_date: fechaSnapshot,
+        user_id: u.user_id,
+        username: u.username,
+        puntos: u.puntos,
+        posicion: u.posicion
+      }))
+
+      await supabase.from('ranking_snapshots').insert(snapshots)
+      alert('📸 Snapshot del ranking guardado correctamente')
+
+    } catch (err) {
+      console.error("Error guardando snapshot:", err)
+      alert("Error al guardar snapshot: " + err.message)
+    } finally {
+      setGuardandoSnapshot(false)
+    }
   }
 
 // --- NUEVO: Guardar cambios de Premios Extra y Podio ---
@@ -551,6 +845,20 @@ return (
 
             {/* Botón único para guardar todo el bloque de extras (Internacionalizado) */}
             <div className="text-center pt-2">
+            
+            {/* BOTÓN SNAPSHOT RANKING */}
+              <button
+                onClick={handleGuardarSnapshot}
+                disabled={guardandoSnapshot}
+                className={`w-full py-3 font-black uppercase rounded-2xl text-xs mb-4 transition-all ${
+                  guardandoSnapshot
+                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                    : 'bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600/30'
+                }`}
+              >
+                {guardandoSnapshot ? '⏳ Guardando...' : '📸 GUARDAR SNAPSHOT DEL RANKING'}
+              </button>
+
             <button
             onClick={handleGuardarExtras}
             disabled={guardandoExtras}
