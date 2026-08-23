@@ -158,58 +158,6 @@ const handleGuardarResultado = async (matchId) => {
     // Actualizar el estado local
     setPartidos(prev => prev.map(m => m.id === matchId ? { ...m, ...datosActualizar } : m))
 
-    // SNAPSHOT DEL RANKING si el partido se marca como finalizado
-    if (estaFinalizado) {
-      try {
-        // 1. Traer todas las predicciones y usuarios
-        const { data: todasPreds } = await supabase.from('predictions').select('*')
-        const { data: usuarios } = await supabase.from('profiles').select('id, username').neq('username', 'DEMO')
-        const { data: todosPartidos } = await supabase.from('matches').select('*')
-
-        // 2. Calcular puntos simples por marcador exacto para cada usuario
-        const partidosFinalizados = todosPartidos?.filter(m => m.is_finished) || []
-        const partidosMap = {}
-        partidosFinalizados.forEach(m => { partidosMap[m.id] = m })
-
-        const rankingActual = (usuarios || []).map(user => {
-          const apuestas = (todasPreds || []).filter(p => p.user_id === user.id)
-          let puntos = 0
-          apuestas.forEach(ap => {
-            const partido = partidosMap[ap.match_id]
-            if (!partido) return
-            if (ap.prediction_home !== null && ap.prediction_away !== null &&
-                Number(ap.prediction_home) === Number(partido.home_score) &&
-                Number(ap.prediction_away) === Number(partido.away_score)) {
-              puntos += 5
-            }
-          })
-          return { user_id: user.id, username: user.username, puntos }
-        })
-
-        // 3. Ordenar y asignar posición
-        rankingActual.sort((a, b) => b.puntos - a.puntos)
-        rankingActual.forEach((u, i) => { u.posicion = i + 1 })
-
-        // 4. Borrar snapshots anteriores de este partido si los hay
-        await supabase.from('ranking_snapshots').delete().eq('match_id', matchId)
-
-        // 5. Insertar nuevo snapshot con la fecha del partido
-        const snapshots = rankingActual.map(u => ({
-          match_id: matchId,
-          match_date: partidoEnVivo.match_date,
-          user_id: u.user_id,
-          username: u.username,
-          puntos: u.puntos,
-          posicion: u.posicion
-        }))
-
-        await supabase.from('ranking_snapshots').insert(snapshots)
-
-      } catch (errSnap) {
-        console.error("Error guardando snapshot:", errSnap)
-      }
-    }
-
     alert(`${t.admin_alert_match || 'Partido'} ${homeTeam} vs ${awayTeam} ${t.admin_alert_updated_success || 'actualizado correctamente.'}`)
 
   } catch (err) {
@@ -461,6 +409,8 @@ const handleGuardarResultado = async (matchId) => {
         posicion: u.posicion
       }))
 
+      // Borrar snapshots con la misma fecha antes de insertar
+      await supabase.from('ranking_snapshots').delete().eq('match_date', fechaSnapshot)
       await supabase.from('ranking_snapshots').insert(snapshots)
       alert('📸 Snapshot del ranking guardado correctamente')
 
