@@ -128,11 +128,20 @@ export default function Stats2026Tab({ t, onClose }) {
 
       setDatos({ statsJugadores, numJugadores: usuarios?.length || 0 })
 
-            // CARGAR SNAPSHOTS PARA LA GRÁFICA
-      const { data: snapshots } = await supabase
+            // CARGAR SNAPSHOTS PARA LA GRÁFICA — combinando histórico y recientes
+      const { data: snapshotsHistoricos } = await supabase
+        .from('historical_ranking_evolution')
+        .select('username, puntos, match_date')
+        .eq('edition_year', 2026)
+        .order('match_date', { ascending: true })
+
+      const { data: snapshotsRecientes } = await supabase
         .from('ranking_snapshots')
         .select('username, puntos, match_date')
+        .gte('match_date', '2026-07-04')
         .order('match_date', { ascending: true })
+
+      const snapshots = [...(snapshotsHistoricos || []), ...(snapshotsRecientes || [])]
 
       if (snapshots && snapshots.length > 0) {
         // Obtener usuarios únicos
