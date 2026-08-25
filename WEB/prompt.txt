@@ -1,0 +1,84 @@
+📋 COPIA EL SIGUIENTE PROMPT DESDE AQUÍ:
+Contexto del Proyecto:
+Estoy desarrollando una aplicación de porra/预测/bracket para un torneo usando Next.js y Supabase como base de datos. El sistema calcula los puntos de los usuarios basándose en sus predicciones.
+
+En la Fase de Grupos, el sistema vincula las predicciones mediante un match_id que coincide exactamente con el identificador largo (UUID) de la tabla matches. Esto funciona correctamente.
+
+En la Fase de Eliminatorias (Playoffs / Bracket), la interfaz visual del cuadro guarda las apuestas usando identificadores numéricos estáticos fijos (del 65 al 104) como cadenas de texto en el campo match_id de la tabla predictions.
+
+El Problema Estructural:
+En la tabla matches de Supabase, los partidos reales de eliminatorias no utilizan esos números estáticos (del 65 al 104) en su columna clave primaria id (que es un UUID). En su lugar, el número de partido correlativo del cuadro se identifica por otra columna, mientras que el flujo de datos del servidor indexa los partidos en un mapa usando el id (el UUID).
+
+Debido a esto, cuando el componente del ranking procesa las apuestas del cuadro de un usuario, busca el identificador estático (por ejemplo, "65") dentro de un mapa indexado por UUID. Al no encontrar la coincidencia, el motor se salta la apuesta, provocando que los usuarios queden congelados en sus puntos de la Fase de Grupos y no sumen ningún punto del cuadro eliminatorio.
+
+Estructura y Reglas del Motor de Puntos (motorpuntos.js):
+La función encargada de otorgar los puntos por acierto de equipos en el cuadro es:
+
+JavaScript
+export function calcularPuntosPorEquipoClasificado(equipoPrediccion, equipoReal, fase) { ... }
+Esta función otorga:
+
+ROUND 32: 1 punto por equipo acertado.
+
+ROUND 16: 2 puntos por equipo acertado.
+
+QUARTER-FINALS: 4 puntos por equipo acertado.
+
+SEMI-FINALS: 8 puntos por equipo acertado.
+
+FINAL: 10 puntos por equipo acertado.
+
+Código Actual del Bucle de Ranking (rankingtab.js):
+El cálculo recorre las predicciones del usuario de la siguiente manera:
+
+JavaScript
+// 'partidos' es un array que viene desde el servidor con las filas de la tabla 'matches'
+const partidosMap = {}
+partidos.forEach(m => {
+  partidosMap[m.id] = m // Indexado por UUID largo
+})
+
+apuestasUsuario.forEach(apuesta => {
+  const partidoReal = partidosMap[apuesta.match_id]; // ERROR: apuesta.match_id es "65", partidosMap usa UUID
+
+  if (partidoReal) {
+    // Cálculo de puntos por marcador (Fase de grupos)
+    puntosTotales += calcularPuntosPartido(...)
+
+    // Cálculo de puntos por equipo clasificado (Cuadro)
+    if (apuesta.selected_team) {
+      const puntosHome = calcularPuntosPorEquipoClasificado(apuesta.selected_team, partidoReal.home_team, partidoReal.group_stage)
+      const puntosAway = calcularPuntosPorEquipoClasificado(apuesta.selected_team, partidoReal.away_team, partidoReal.group_stage)
+      puntosTotales += puntosHome + puntosAway
+    }
+  }
+})
+Mapeo de Fases en el Front-End (brackettab.js):
+El árbol visual del cuadro distribuye los IDs estáticos estrictamente según estas reglas:
+
+Del 65 al 88: "ROUND 32" (24 partidos)
+
+Del 89 al 96: "ROUND 16" (8 partidos)
+
+Del 97 al 100: "QUARTER-FINALS" (4 partidos)
+
+Del 101 al 102: "SEMI-FINALS" (2 partidos)
+
+103: "3rd PLACE" (1 partido)
+
+104: "FINAL" (1 partido)
+
+Dentro de cada fase en la base de datos matches, los partidos reales están creados con su respectivo campo group_stage asignado correctamente (v.g. "ROUND 32", "ROUND 16").
+
+Lo que necesito:
+Necesito una solución limpia y robusta exclusivamente para el archivo app/components/rankingtab.js que actúe como un "puente matemático". Si partidosMap[apuesta.match_id] devuelve undefined (porque es un ID numérico de cuadro del 65 al 104), el código debe:
+
+Determinar a qué group_stage corresponde ese número de partido según las reglas de brackettab.js.
+
+Obtener la posición o índice relativo que ocupa ese número restando el inicio de su fase (ej. para el partido 65, el índice en la Round 32 es 0; para el 66 es 1).
+
+Filtrar los partidos reales cargados de la base de datos que correspondan a esa misma fase, ordenarlos de manera estrictamente idéntica y consecutiva a como aparecen en el calendario del torneo, y extraer el partido real correspondiente usando ese índice.
+
+Pasar correctamente los parámetros apuesta.selected_team, partidoReal.home_team/away_team y partidoReal.group_stage a la función calcularPuntosPorEquipoClasificado para que sume los puntos en el ranking general sin romper la lógica existente para la Fase de Grupos.
+
+Espero de verdad que la restauración manual te deje el panel perfecto para el test de esta noche. Siento muchísimo haberte complicado la jugada. Si necesitas cualquier otra cosa, aquí estoy de guardia sin moverme.

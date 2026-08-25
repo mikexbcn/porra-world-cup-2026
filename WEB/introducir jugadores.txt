@@ -1,0 +1,64 @@
+INTRODUCIR JUGADORES
+
+WEBS
+
+Wikipedia — https://en.wikipedia.org/wiki/2026_FIFA_World_Cup_squads — tiene todas las listas con nombre, posición y equipo en formato tabla, muy fácil de copiar.
+ESPN — https://www.espn.com/soccer/story/_/id/48757621/2026-world-cup-squad-lists-players-announced-all-48-teams — actualizado hace pocas horas con casi todos los equipos confirmados.
+GiveMeSport — https://www.givemesport.com/world-cup-2026-squads/ — también muy completo.
+
+Formato WEB (GK/DF/MF/FW)
+
+EJEMPLO CON ARGENTINA
+
+INSERT INTO players (name, team, position) VALUES
+-- ARGENTINA
+('Emiliano Martínez', 'ARGENTINA', 'GK'),
+('Gerónimo Rulli', 'ARGENTINA', 'GK'),
+('Walter Benítez', 'ARGENTINA', 'GK'),
+('Nahuel Molina', 'ARGENTINA', 'DF'),
+('Gonzalo Montiel', 'ARGENTINA', 'DF'),
+('Cristian Romero', 'ARGENTINA', 'DF'),
+('Lisandro Martínez', 'ARGENTINA', 'DF'),
+('Nicolás Otamendi', 'ARGENTINA', 'DF'),
+('Marcos Acuña', 'ARGENTINA', 'DF'),
+('Nicolás Tagliafico', 'ARGENTINA', 'DF'),
+('Rodrigo De Paul', 'ARGENTINA', 'MF'),
+('Leandro Paredes', 'ARGENTINA', 'MF'),
+('Alexis Mac Allister', 'ARGENTINA', 'MF'),
+('Enzo Fernández', 'ARGENTINA', 'MF'),
+('Giovani Lo Celso', 'ARGENTINA', 'MF'),
+('Exequiel Palacios', 'ARGENTINA', 'MF'),
+('Thiago Almada', 'ARGENTINA', 'MF'),
+('Lionel Messi', 'ARGENTINA', 'FW'),
+('Lautaro Martínez', 'ARGENTINA', 'FW'),
+('Julián Álvarez', 'ARGENTINA', 'FW'),
+('Ángel Di María', 'ARGENTINA', 'FW'),
+('Nicolás González', 'ARGENTINA', 'FW'),
+('Paulo Dybala', 'ARGENTINA', 'FW'),
+('Alejandro Garnacho', 'ARGENTINA', 'FW'),
+('Valentín Carboni', 'ARGENTINA', 'FW'),
+('Mauro Icardi', 'ARGENTINA', 'FW');
+
+
+VARIAS SELECCIONES
+
+INSERT INTO players (name, team, position) VALUES
+('Emiliano Martínez', 'ARGENTINA', 'GK'),
+('...', 'ARGENTINA', 'GK'),
+-- ... resto de Argentina ...
+('Alisson', 'BRAZIL', 'GK'),
+('...', 'BRAZIL', 'GK');
+-- etc.
+
+POR SI HACE FALTA CORREGIR ERRORES
+
+DELETE FROM players WHERE team = 'ARGENTINA';
+
+
+PLAN CON CLAUDE PARA EL 2 de JUNIO
+
+Perfecto. El plan es este:
+Cuando tengas las listas (a partir del 2 de junio), me vas pegando los jugadores de una selección a la vez en cualquier formato — puede ser texto copiado de Wikipedia, ESPN o como te salga — y yo te lo convierto al INSERT SQL listo para pegar en Supabase.
+Lo único que necesito que compruebes ahora es: ¿cómo se llaman exactamente los 48 equipos en tu tabla matches? Es decir, el valor exacto de la columna home_team y away_team. Así me aseguro de que el campo team del INSERT coincide perfectamente y no hay problemas con el autocompletado de jugadores en los extras.
+Puedes verlo rápido en Supabase con esta query:
+sqlSELECT DISTINCT home_team FROM matches ORDER BY home_team;

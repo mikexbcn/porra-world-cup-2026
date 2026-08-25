@@ -1,0 +1,161 @@
+https://vszmhsnpfsriedvevwmk.supabase.co/rest/v1/
+https://vszmhsnpfsriedvevwmk.supabase.co <-- BUENO
+npm run dev arrancar web
+http://localhost:3000 web local
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZzem1oc25wZnNyaWVkdmV2d21rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2Mzk3MDcsImV4cCI6MjA5MzIxNTcwN30.UoWhqFaP_4XN1qAMM75NEqwFDWUAuksoDgcFm6lvYSc
+
+
+Usuarios
+
+	USER: DEMO
+	email: demo@mundial.com
+	Password: Demo_1234
+	TOKEN: DEMO1234
+
+	USER: Messi
+	email: messi@messi.com
+	Password: Messi_1234
+	TOKEN: MESSITEST
+
+ACTUALIZAR WEB
+	git add .
+	git commit -m "Fix: sincronización de columnas de premios extra y estabilidad del bracket"
+	git push origin main
+
+Eliminar todos los datos introducidos por usuario y desbloquear al usuario
+					DO $$ 
+				DECLARE 
+					v_user_id UUID;
+					v_email TEXT := 'el_correo_de_messi@tuweb.com'; -- <--- CAMBIA ESTO por el email real de tu usuario Messi
+				BEGIN
+					-- 1. Conseguimos el ID de autenticación de ese usuario a través de su email
+					SELECT id INTO v_user_id FROM auth.users WHERE email = v_email;
+
+					IF v_user_id IS NOT NULL THEN
+						-- 2. Borramos todos sus pronósticos de partidos (Fase de grupos y Bracket)
+						DELETE FROM predictions WHERE user_id = v_user_id;
+
+						-- 3. Borramos sus predicciones de premios extra
+						DELETE FROM extra_predictions WHERE user_id = v_user_id;
+
+						-- 4. Desbloqueamos el perfil global y CADA UNO de los grupos (los ponemos todos en false)
+						UPDATE profiles 
+						SET 
+							is_locked = false,
+							group_a_locked = false,
+							group_b_locked = false,
+							group_c_locked = false,
+							group_d_locked = false,
+							group_e_locked = false,
+							group_f_locked = false,
+							group_g_locked = false,
+							group_h_locked = false,
+							group_i_locked = false,
+							group_j_locked = false,
+							group_k_locked = false,
+							group_l_locked = false
+						WHERE id = v_user_id;
+						
+						RAISE NOTICE 'Usuario % reseteado por completo con éxito.', v_email;
+					ELSE
+						RAISE NOTICE 'No se encontró ningún usuario con el email %', v_email;
+					END IF;
+				END $$;
+				
+ACTUALIZAR LISTA JUGADORES
+
+-- 1. Borramos la tabla vieja para empezar de cero y sin errores de columnas
+DROP TABLE IF EXISTS players;
+
+-- 2. Creamos la tabla limpia con la columna 'position' integrada
+CREATE TABLE players (
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    team TEXT NOT NULL, 
+    position TEXT NOT NULL, -- GK, DF, MF, FW
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 3. Creamos el índice de rendimiento para las búsquedas
+CREATE INDEX idx_players_name ON players(name);
+
+-- 4. Insertamos la plantilla oficial de Japón
+INSERT INTO players (name, team, position) VALUES
+('Tomoki Hayakawa', 'JAPAN', 'GK'),
+('Keisuke Osako', 'JAPAN', 'GK'),
+('Zion Suzuki', 'JAPAN', 'GK'),
+('Ko Itakura', 'JAPAN', 'DF'),
+('Hiroki Ito', 'JAPAN', 'DF'),
+('Yuto Nagatomo', 'JAPAN', 'DF'),
+('Ayumu Seko', 'JAPAN', 'DF'),
+('Yukinari Sugawara', 'JAPAN', 'DF'),
+('Junnosuke Suzuki', 'JAPAN', 'DF'),
+('Shogo Taniguchi', 'JAPAN', 'DF'),
+('Takehiro Tomiyasu', 'JAPAN', 'DF'),
+('Tsuyoshi Watanabe', 'JAPAN', 'DF'),
+('Ritsu Doan', 'JAPAN', 'MF'),
+('Wataru Endo', 'JAPAN', 'MF'),
+('Junya Ito', 'JAPAN', 'MF'),
+('Daichi Kamada', 'JAPAN', 'MF'),
+('Takefusa Kubo', 'JAPAN', 'MF'),
+('Keito Nakamura', 'JAPAN', 'MF'),
+('Kaishu Sano', 'JAPAN', 'MF'),
+('Ao Tanaka', 'JAPAN', 'MF'),
+('Keisuke Goto', 'JAPAN', 'FW'),
+('Daizen Maeda', 'JAPAN', 'FW'),
+('Koki Ogawa', 'JAPAN', 'FW'),
+('Kento Shiogai', 'JAPAN', 'FW'),
+('Yuito Suzuki', 'JAPAN', 'FW'),
+('Ayase Ueda', 'JAPAN', 'FW');
+
+
+INSERT INTO players (name, team, position) VALUES
+('Lionel Messi', 'ARGENTINA', 'FW'),
+('Kylian Mbappé', 'FRANCE', 'FW');
+
+
+
+SISTEMA DE PUNTUACIÓN
+
+
+
+Puntuación por Progresión
+
+Pase a Round 32 1 PT por equipo acertado que pasa de grupos a 32
+
+Pase a Round 16 2 PTS por equipo acertado que pasa de 32 a 16
+
+Pase a Quarter-finals 4 PTS por equipo acertado que pasa de 16 a Quarter-finals
+
+Pase a Semi-finals 8 PTS por equipo acertado que pasa de Quarter-finals a Semi-finals
+
+Pase a la Final 10 PTS por equipo acertado que pasa de Semi-finals a Final
+
+
+
+Resultados
+
+Resultado Exacto 5 PTS
+
+
+
+Finales
+
+Ganador 3er Puesto 12 PTS
+
+Ganador Mundial 30 PTS <-- esto es nuevo, he decidido aumentarlo
+
+
+
+Premios EXTRA
+
+Balon de Oro 10PTS
+
+Bota de Oro 10PTS
+
+Guante de Oro 10PTS
+
+Mejor jugador joven 10PTS
+
+Fair Play 10PTS

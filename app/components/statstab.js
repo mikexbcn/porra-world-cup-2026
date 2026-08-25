@@ -1,6 +1,7 @@
 // app/components/statstab.js
 import { useState, useEffect } from 'react'
 import { supabase } from '../../supabaseClient'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 const UNLOCK_DATE = new Date('2026-06-11T19:00:00Z'); // 21:00 hora española
 //const UNLOCK_DATE = new Date('2020-01-01T00:00:00Z');
@@ -13,6 +14,10 @@ export default function StatsTab({ t, partidos, getFlag }) {
     const [loading, setLoading] = useState(true);
     const [partidoVivo, setPartidoVivo] = useState(null);
     const [predVivo, setPredVivo] = useState(null);
+    const [datosGrafica, setDatosGrafica] = useState([])
+    const [usuariosGrafica, setUsuariosGrafica] = useState([])
+    const [aciertosFase, setAciertosFase] = useState([])
+    const [golesStats, setGolesStats] = useState([])
 
   useEffect(() => {
     const intervalo = setInterval(() => {
@@ -161,6 +166,89 @@ const statsExtras = campos.map(campo => {
           menosGoles: menosGoles?.resultado,
         });
       }
+
+            // ACIERTOS POR FASE Y GOLES
+      const { data: predsCompletas } = await supabase
+        .from('predictions')
+        .select('user_id, match_id, prediction_home, prediction_away')
+
+      const { data: perfiles } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .neq('username', 'DEMO')
+        .order('username')
+
+      const { data: partidosFinalizados } = await supabase
+        .from('matches')
+        .select('id, group_stage, home_score, away_score')
+        .eq('is_finished', true)
+
+      const partidosMapFase = {}
+      partidosFinalizados?.forEach(m => { partidosMapFase[m.id] = m })
+
+      const statsJugadores = (perfiles || []).map(user => {
+        const apuestas = (predsCompletas || []).filter(p => p.user_id === user.id)
+        const aciertos = { GROUP: 0, 'ROUND 32': 0, 'ROUND 16': 0, 'QUARTER-FINAL': 0, 'SEMI-FINAL': 0, '3RD PLACE': 0, 'FINAL': 0 }
+        let goles = 0
+        apuestas.forEach(ap => {
+          const partido = partidosMapFase[ap.match_id]
+          if (!partido) return
+          if (ap.prediction_home === null || ap.prediction_away === null) return
+          if (Number(ap.prediction_home) === Number(partido.home_score) &&
+              Number(ap.prediction_away) === Number(partido.away_score)) {
+            const fase = partido.group_stage?.toUpperCase().includes('GROUP') ? 'GROUP' : partido.group_stage
+            if (aciertos[fase] !== undefined) aciertos[fase]++
+            goles += Number(ap.prediction_home) + Number(ap.prediction_away)
+          }
+        })
+        return { username: user.username, aciertos, goles, total: Object.values(aciertos).reduce((a,b) => a+b, 0) }
+      })
+
+      setAciertosFase(statsJugadores)
+      setGolesStats([...statsJugadores].sort((a,b) => b.goles - a.goles))
+
+      // GRÁFICA DE EVOLUCIÓN — histórico del mundial actual + snapshots recientes
+      const AÑO_ACTUAL = 2026 // Cambiar a 2030 para el próximo mundial
+      
+      const { data: snapshotsHistoricos } = await supabase
+        .from('historical_ranking_evolution')
+        .select('username, puntos, match_date')
+        .eq('edition_year', AÑO_ACTUAL)
+        .order('match_date', { ascending: true })
+
+      const { data: snapshotsRecientes } = await supabase
+        .from('ranking_snapshots')
+        .select('username, puntos, match_date')
+        .order('match_date', { ascending: true })
+
+      const snapshots = [...(snapshotsHistoricos || []), ...(snapshotsRecientes || [])]
+
+      if (snapshots && snapshots.length > 0) {
+        const usernames = [...new Set(snapshots.map(s => s.username))]
+        setUsuariosGrafica(usernames)
+
+        const porDia = {}
+        snapshots.forEach(s => {
+          const dia = new Date(s.match_date).toISOString().split('T')[0]
+          if (!porDia[dia] || s.match_date > porDia[dia]) {
+            porDia[dia] = s.match_date
+          }
+        })
+        const fechasUnicas = Object.values(porDia).sort()
+
+        const dataGrafica = fechasUnicas.map(fecha => {
+          const punto = {
+            fecha: new Date(fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
+          }
+          usernames.forEach(username => {
+            const snap = snapshots.find(s => s.match_date === fecha && s.username === username)
+            punto[username] = snap ? snap.puntos : null
+          })
+          return punto
+        })
+        setDatosGrafica(dataGrafica)
+      }
+
     } catch (err) {
       console.error("Error cargando estadísticas:", err);
     } finally {
@@ -278,6 +366,64 @@ const statsExtras = campos.map(campo => {
         </div>
       </div>
 
+      {/* ACIERTOS POR FASE */}
+      {aciertosFase.length > 0 && (
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mb-6 overflow-x-auto">
+          <h2 className="text-sm font-black text-yellow-500 uppercase tracking-widest mb-4">⚽ {t.stats2026_aciertos_fase}</h2>
+          <table className="w-full text-left border-collapse text-[10px]">
+            <thead>
+              <tr className="border-b border-white/10 text-gray-500 font-black uppercase">
+                <th className="py-2 pr-4">Usuario</th>
+                <th className="py-2 px-2 text-center">GRP</th>
+                <th className="py-2 px-2 text-center">R32</th>
+                <th className="py-2 px-2 text-center">R16</th>
+                <th className="py-2 px-2 text-center">QF</th>
+                <th className="py-2 px-2 text-center">SF</th>
+                <th className="py-2 px-2 text-center">3RD</th>
+                <th className="py-2 px-2 text-center">FIN</th>
+                <th className="py-2 px-2 text-center text-yellow-500">TOT</th>
+              </tr>
+            </thead>
+            <tbody>
+              {aciertosFase.sort((a,b) => b.total - a.total).map((u, i) => (
+                <tr key={u.username} className={`border-b border-white/5 ${i === 0 ? 'text-yellow-500' : 'text-white'}`}>
+                  <td className="py-2 pr-4 font-black uppercase">{i === 0 ? '🥇 ' : i === 1 ? '🥈 ' : i === 2 ? '🥉 ' : ''}{u.username}</td>
+                  <td className="py-2 px-2 text-center">{u.aciertos['GROUP']}</td>
+                  <td className="py-2 px-2 text-center">{u.aciertos['ROUND 32']}</td>
+                  <td className="py-2 px-2 text-center">{u.aciertos['ROUND 16']}</td>
+                  <td className="py-2 px-2 text-center">{u.aciertos['QUARTER-FINAL']}</td>
+                  <td className="py-2 px-2 text-center">{u.aciertos['SEMI-FINAL']}</td>
+                  <td className="py-2 px-2 text-center">{u.aciertos['3RD PLACE']}</td>
+                  <td className="py-2 px-2 text-center">{u.aciertos['FINAL']}</td>
+                  <td className="py-2 px-2 text-center font-black">{u.total}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* GOLES ACUMULADOS */}
+      {golesStats.length > 0 && (
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mb-6">
+          <h2 className="text-sm font-black text-yellow-500 uppercase tracking-widest mb-4">🥅 {t.stats2026_goles}</h2>
+          <div className="space-y-2">
+            {golesStats.map((u, i) => (
+              <div key={u.username} className="flex justify-between items-center">
+                <span className="text-[10px] font-black uppercase text-white w-24">{u.username}</span>
+                <div className="flex items-center gap-3 flex-1 mx-4">
+                  <div className="flex-1 bg-white/5 rounded-full h-1.5">
+                    <div className="h-1.5 rounded-full bg-yellow-500"
+                      style={{ width: `${Math.round((u.goles / Math.max(...golesStats.map(x => x.goles), 1)) * 100)}%` }} />
+                  </div>
+                </div>
+                <span className="text-[10px] font-black text-yellow-500">{u.goles} goles</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ESTADÍSTICAS DE RESULTADOS */}
       {resultStats && (
         <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
@@ -322,6 +468,56 @@ const statsExtras = campos.map(campo => {
               <p className="text-2xl font-black text-white">{resultStats.menosGoles}</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* GRÁFICA DE EVOLUCIÓN */}
+      {datosGrafica.length > 0 && (
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mb-6">
+          <h2 className="text-sm font-black text-yellow-500 uppercase tracking-widest mb-6">📈 Evolución del Ranking</h2>
+          <ResponsiveContainer width="100%" height={350}>
+            <LineChart data={datosGrafica} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+              <XAxis
+                dataKey="fecha"
+                tick={{ fill: '#6b7280', fontSize: 9, fontWeight: 'bold' }}
+                axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+              />
+              <YAxis
+                tick={{ fill: '#6b7280', fontSize: 9, fontWeight: 'bold' }}
+                axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#111',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '12px',
+                  fontSize: '10px',
+                  fontWeight: 'bold'
+                }}
+                labelStyle={{ color: '#eab308', fontWeight: 'black', marginBottom: '4px' }}
+              />
+              <Legend
+                wrapperStyle={{ fontSize: '9px', fontWeight: 'bold', paddingTop: '16px' }}
+              />
+              {usuariosGrafica.map((username, i) => {
+                const colores = ['#eab308', '#ef4444', '#3b82f6', '#10b981', '#f97316', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f59e0b']
+                return (
+                  <Line
+                    key={username}
+                    type="monotone"
+                    dataKey={username}
+                    stroke={colores[i % colores.length]}
+                    strokeWidth={2}
+                    strokeDasharray={i % 3 === 1 ? "5 5" : i % 3 === 2 ? "3 3" : "0"}
+                    dot={{ r: 3, fill: colores[i % colores.length] }}
+                    activeDot={{ r: 5 }}
+                    connectNulls={true}
+                  />
+                )
+              })}
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       )}
     </div>

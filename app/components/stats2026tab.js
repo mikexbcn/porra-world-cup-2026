@@ -16,119 +16,72 @@ export default function Stats2026Tab({ t, onClose }) {
   async function cargarDatos() {
     setLoading(true)
     try {
-      // 1. Jugadores
-      const { data: usuarios } = await supabase
-        .from('profiles')
-        .select('id, username')
-        .neq('username', 'DEMO')
-        .order('username')
-
-      // 2. Partidos finalizados
-      const { data: partidos } = await supabase
-        .from('matches')
+      // 1. Datos de la edición
+      const { data: edicion } = await supabase
+        .from('historical_editions')
         .select('*')
-        .eq('is_finished', true)
+        .eq('year', 2026)
+        .single()
 
-      // 3. Predicciones
-      const { data: predicciones } = await supabase
+      // 2. Stats por jugador
+      const { data: playerStats } = await supabase
+        .from('historical_player_stats')
+        .select('*')
+        .eq('edition_year', 2026)
+        .order('posicion_final')
+
+      // 3. Campeón más elegido (desde predictions)
+      const { data: podiums } = await supabase
         .from('predictions')
-        .select('*')
+        .select('selected_team')
+        .eq('match_id', 'podium_1')
 
-      // 4. Extras oficiales
-      const { data: extrasOficiales } = await supabase
-        .from('extra_results')
-        .select('*')
-        .eq('id', 1)
-        .maybeSingle()
-
-      // 5. Predicciones extra
-      const { data: extrasUsuarios } = await supabase
-        .from('extra_predictions')
-        .select('*')
-
-      // Mapear partidos por id
-      const partidosMap = {}
-      partidos?.forEach(m => { partidosMap[m.id] = m })
-
-      const fases = ['GROUP', 'ROUND 32', 'ROUND 16', 'QUARTER-FINAL', 'SEMI-FINAL', '3RD PLACE', 'FINAL']
-
-      const statsJugadores = usuarios?.map(user => {
-        const apuestas = predicciones?.filter(p => p.user_id === user.id) || []
-        const extrasUser = extrasUsuarios?.find(e => e.user_id === user.id)
-
-        // Aciertos por fase
-        const aciertos = { GROUP: 0, 'ROUND 32': 0, 'ROUND 16': 0, 'QUARTER-FINAL': 0, 'SEMI-FINAL': 0, '3RD PLACE': 0, 'FINAL': 0 }
-        let goles = 0
-        let puntosMarcadores = 0
-
-        apuestas.forEach(ap => {
-          const partido = partidosMap[ap.match_id]
-          if (!partido || !partido.is_finished) return
-          if (ap.prediction_home === null || ap.prediction_away === null) return
-          if (Number(ap.prediction_home) === Number(partido.home_score) &&
-              Number(ap.prediction_away) === Number(partido.away_score)) {
-            const fase = partido.group_stage?.toUpperCase().includes('GROUP') ? 'GROUP' : partido.group_stage
-            if (aciertos[fase] !== undefined) aciertos[fase]++
-            goles += Number(ap.prediction_home) + Number(ap.prediction_away)
-            puntosMarcadores += 5
-          }
-        })
-
-        // Extras
-        let puntosExtras = 0
-        const extrasAcertados = { best_player: 0, top_scorer: 0, best_keeper: 0, best_young: 0, fair_play: 0 }
-        if (extrasOficiales && extrasUser) {
-          ['best_player', 'top_scorer', 'best_keeper', 'best_young', 'fair_play'].forEach(campo => {
-            if (extrasOficiales[campo] && extrasUser[campo] === extrasOficiales[campo]) {
-              extrasAcertados[campo] = 10
-              puntosExtras += 10
-            }
-          })
+      const conteoCampeones = {}
+      ;(podiums || []).forEach(p => {
+        if (p.selected_team) {
+          const key = p.selected_team.toUpperCase()
+          conteoCampeones[key] = (conteoCampeones[key] || 0) + 1
         }
+      })
+      const datosCampeones = Object.entries(conteoCampeones).sort((a, b) => b[1] - a[1]).slice(0, 5)
+      const totalCampeones = Object.values(conteoCampeones).reduce((a, b) => a + b, 0)
 
-        // Pódium
-        let puntosPodium = 0
-        const podiumAcertados = { campeon: 0, subcampeon: 0, tercero: 0, cuarto: 0 }
-        const podium1 = apuestas.find(p => p.match_id === 'podium_1')
-        const podium2 = apuestas.find(p => p.match_id === 'podium_2')
-        const podium3 = apuestas.find(p => p.match_id === 'podium_3')
-        const podium4 = apuestas.find(p => p.match_id === 'podium_4')
-        if (extrasOficiales?.champion && podium1?.selected_team?.toUpperCase() === extrasOficiales.champion?.toUpperCase()) {
-        podiumAcertados.campeon = 20; puntosPodium += 20
-        }
-        if (extrasOficiales?.runner_up && podium2?.selected_team?.toUpperCase() === extrasOficiales.runner_up?.toUpperCase()) {
-        podiumAcertados.subcampeon = 0
-        }
-        if (extrasOficiales?.third_place && podium3?.selected_team?.toUpperCase() === extrasOficiales.third_place?.toUpperCase()) {
-        podiumAcertados.tercero = 12; puntosPodium += 12
-        }
-        if (extrasOficiales?.fourth_place && podium4?.selected_team?.toUpperCase() === extrasOficiales.fourth_place?.toUpperCase()) {
-        podiumAcertados.cuarto = 0
-        }
+      // 4. Construir statsJugadores desde historical_player_stats
+      const statsJugadores = (playerStats || []).map(u => ({
+        username: u.username,
+        aciertos: {
+          'GROUP': u.aciertos_groups || 0,
+          'ROUND 32': u.aciertos_round32 || 0,
+          'ROUND 16': u.aciertos_round16 || 0,
+          'QUARTER-FINAL': u.aciertos_quarter || 0,
+          'SEMI-FINAL': u.aciertos_semi || 0,
+          '3RD PLACE': u.aciertos_third || 0,
+          'FINAL': u.aciertos_final || 0,
+        },
+        goles: u.goles_acertados || 0,
+        puntosMarcadores: (u.aciertos_groups + u.aciertos_round32 + u.aciertos_round16 + u.aciertos_quarter + u.aciertos_semi + u.aciertos_third + u.aciertos_final) * 5,
+        totalAcertados: u.partidos_acertados || 0,
+        extrasAcertados: {
+          best_player: u.extras_best_player || 0,
+          top_scorer: u.extras_top_scorer || 0,
+          best_keeper: u.extras_best_keeper || 0,
+          best_young: u.extras_best_young || 0,
+          fair_play: u.extras_fair_play || 0,
+        },
+        puntosExtras: (u.extras_best_player || 0) + (u.extras_top_scorer || 0) + (u.extras_best_keeper || 0) + (u.extras_best_young || 0) + (u.extras_fair_play || 0),
+        podiumAcertados: {
+          campeon: u.podium_campeon || 0,
+          subcampeon: 0,
+          tercero: u.podium_tercero || 0,
+          cuarto: 0,
+        },
+        puntosPodium: (u.podium_campeon || 0) + (u.podium_tercero || 0),
+        totalPuntos: u.puntos_total || 0,
+      }))
 
-        const totalAcertados = Object.values(aciertos).reduce((a, b) => a + b, 0)
-        const totalPuntos = puntosMarcadores + puntosExtras + puntosPodium
+      setDatos({ statsJugadores, numJugadores: playerStats?.length || 0, datosCampeones, totalCampeones })
 
-        return {
-          username: user.username,
-          aciertos,
-          goles,
-          puntosMarcadores,
-          extrasAcertados,
-          puntosExtras,
-          podiumAcertados,
-          puntosPodium,
-          totalAcertados,
-          totalPuntos
-        }
-      }) || []
-
-      // Ordenar por total puntos
-      statsJugadores.sort((a, b) => b.totalPuntos - a.totalPuntos)
-
-      setDatos({ statsJugadores, numJugadores: usuarios?.length || 0 })
-
-            // CARGAR SNAPSHOTS PARA LA GRÁFICA — combinando histórico y recientes
+      // 5. GRÁFICA — combinando histórico y snapshots recientes
       const { data: snapshotsHistoricos } = await supabase
         .from('historical_ranking_evolution')
         .select('username, puntos, match_date')
@@ -144,23 +97,20 @@ export default function Stats2026Tab({ t, onClose }) {
       const snapshots = [...(snapshotsHistoricos || []), ...(snapshotsRecientes || [])]
 
       if (snapshots && snapshots.length > 0) {
-        // Obtener usuarios únicos
         const usernames = [...new Set(snapshots.map(s => s.username))]
         setUsuarios(usernames)
 
-        // Agrupar por día y quedarse con el último snapshot de cada día
         const porDia = {}
         snapshots.forEach(s => {
-        const dia = new Date(s.match_date).toISOString().split('T')[0]
-        if (!porDia[dia] || s.match_date > porDia[dia]) {
-          porDia[dia] = s.match_date
-        }
-     })
+          const dia = new Date(s.match_date).toISOString().split('T')[0]
+          if (!porDia[dia] || s.match_date > porDia[dia]) {
+            porDia[dia] = s.match_date
+          }
+        })
         const fechasUnicas = Object.values(porDia).sort()
 
-        // Construir datos para la gráfica
         const dataGrafica = fechasUnicas.map(fecha => {
-          const punto = { 
+          const punto = {
             fecha: new Date(fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
           }
           usernames.forEach(username => {
@@ -171,7 +121,6 @@ export default function Stats2026Tab({ t, onClose }) {
         })
         setDatosGrafica(dataGrafica)
       }
-
 
     } catch (err) {
       console.error("Error cargando stats 2026:", err)
