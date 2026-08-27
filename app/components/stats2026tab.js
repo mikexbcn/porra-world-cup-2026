@@ -273,7 +273,7 @@ export default function Stats2026Tab({ t, onClose }) {
         {datosGrafica.length > 0 && (
           <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mb-6">
             <h2 className="text-sm font-black text-yellow-500 uppercase tracking-widest mb-6">📈 Evolución del Ranking</h2>
-            <ResponsiveContainer width="100%" height={350}>
+            <ResponsiveContainer width="100%" height={250} minWidth={0}>
               <LineChart data={datosGrafica} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                 <XAxis 
@@ -295,8 +295,10 @@ export default function Stats2026Tab({ t, onClose }) {
                   }}
                   labelStyle={{ color: '#eab308', fontWeight: 'black', marginBottom: '4px' }}
                 />
-                <Legend 
-                  wrapperStyle={{ fontSize: '9px', fontWeight: 'bold', paddingTop: '16px' }}
+                <Legend
+                  wrapperStyle={{ fontSize: '8px', fontWeight: 'bold', paddingTop: '8px' }}
+                  layout="horizontal"
+                  align="center"
                 />
                 {usuarios.map((username, i) => {
                   const colores = ['#eab308', '#ef4444', '#3b82f6', '#10b981', '#f97316', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f59e0b']
