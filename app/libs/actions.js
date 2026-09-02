@@ -14,7 +14,7 @@ export const handleRegister = async (email, password, username, setSession, setL
       await supabase.from('profiles').insert([{ id: data.user.id, username: username.toUpperCase() }]);
       setSession(data.session);
     }
-    alert("Registro correcto");
+    alert(t ? t.register_success : "Registro correcto. ¡Bienvenido!");
   } catch (err) {
     alert(err.message);
   } finally {
